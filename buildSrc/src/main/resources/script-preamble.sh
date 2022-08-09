@@ -4,6 +4,10 @@ FAILED_PROJECTS=()
 EXIT_STATUS=0
 
 echo "=== Utils located at $UTILS"
+echo "--- utils:"
+ls $UTILS
+echo "--- utils parent:"
+ls $UTILS/..
 
 profile() {
   local JAR=$1
