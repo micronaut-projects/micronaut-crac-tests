@@ -1,4 +1,3 @@
-plugins {
-    id "io.micronaut.build.internal.docs"
-    id "io.micronaut.build.internal.quality-reporting"
-}
+import io.micronaut.guides.CracPlugin
+
+apply plugin: CracPlugin

@@ -1,35 +1,133 @@
-<!-- Checklist: https://github.com/micronaut-projects/micronaut-core/wiki/New-Module-Checklist -->
+# Micronaut CRaC tests
 
-# Micronaut crac-tests
+This repository allows testing of Micronaut integration with CRaC.
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.crac-tests/micronaut-project-template.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.micronaut.project-template%22%20AND%20a:%22micronaut-project-template%22)
-[![Build Status](https://github.com/micronaut-projects/micronaut-crac-tests/workflows/Java%20CI/badge.svg)](https://github.com/micronaut-projects/micronaut-project-template/actions)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=micronaut-projects_micronaut-template&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=micronaut-projects_micronaut-template)
-[![Revved up by Gradle Enterprise](https://img.shields.io/badge/Revved%20up%20by-Gradle%20Enterprise-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.micronaut.io/scans)
+## Tun all the tests
 
-Micronaut crac-tests
+To run all the tests, simply run
 
-## Documentation
+```shell
+$ ./gradlew build
+```
 
-See the [Documentation](https://micronaut-projects.github.io/micronaut-crac-tests/latest/guide/) for more information.
+This will generate all the projects in `build/code` and run the test scripts.
 
-See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-crac-tests/snapshot/guide/) for the current development docs.
+To test a single test, run the dynamic task created by `CracPlugin`; convert the kebab case guide directory name to lowerCamelCase and add "Build", e.g. to build `netty-data`, run
 
-<!-- ## Examples
+```shell
+./gradlew nettyDataBuild
+```
 
-Examples can be found in the [examples](https://github.com/micronaut-projects/micronaut-crac-tests/tree/master/examples) directory. -->
+## Create a new guide
 
-## Snapshots and Releases
+All the tests leverage [Micronaut Starter](https://github.com/micronaut-projects/micronaut-starter) core to create the projects. The idea is that one guide can generate up to six different projects, one per language (Java, Groovy and Kotlin) and build tool (Gradle and Maven).
 
-Snapshots are automatically published to [Sonatype Snapshots](https://s01.oss.sonatype.org/content/repositories/snapshots/io/micronaut/) using [Github Actions](https://github.com/micronaut-projects/micronaut-crac-tests/actions).
+### Guide structure
 
-See the documentation in the [Micronaut Docs](https://docs.micronaut.io/latest/guide/index.html#usingsnapshots) for how to configure your build to use snapshots.
+All the guides are in the `guides` directory in separate subdirectories. Inside the directory, the main file is `metadata.json` that describes the guide. All the fields are declared in [GuideMetadata](https://github.com/micronaut-projects/micronaut-guides/blob/master/buildSrc/src/main/groovy/io/micronaut/guides/GuideMetadata.groovy) class.
 
-Releases are published to Maven Central via [Github Actions](https://github.com/micronaut-projects/micronaut-crac-tests/actions).
+```json
+{
+  "apps": [
+    {
+      "name": "default",
+      "features": ["graalvm", "reactor"]
+    }
+  ]
+}
+```
 
-Releases are completely automated. To perform a release use the following steps:
+Besides, the obvious fields that don't need any further explanation, the other are:
 
-* [Publish the draft release](https://github.com/micronaut-projects/micronaut-crac-tests/releases). There should be already a draft release created, edit and publish it. The Git Tag should start with `v`. For example `v1.0.0`.
-* [Monitor the Workflow](https://github.com/micronaut-projects/micronaut-crac-tests/actions?query=workflow%3ARelease) to check it passed successfully.
-* If everything went fine, [publish to Maven Central](https://github.com/micronaut-projects/micronaut-crac-tests/actions?query=workflow%3A"Maven+Central+Sync").
-* Celebrate!
+- `buildTools`: By default we generate the code in the guides for Gradle and Maven. If a guide is specific only for a build tool, define it here.
+- `languages`: The guides should be written in the three languages. Sometimes we only write guides in one language or the guide only supports a specific language.
+- `skipGradleTests`: Set it to `true` to skip running the tests for the Gradle applications for the guide. This is useful when it's not easy to run tests on CI, for example for some cloud guides.
+- `skipMavenTests`: Same as `skipGradleTests` but for Maven applications.
+- `apps`: List of pairs `name`-`features` for the generated application. There are two types of guides, most of the guides only generate one application (single-app). In this case the name of the applications needs to be `default`. There are a few guides that generate multiple applications, so they need to be declared here:
+```json
+  ...
+  "apps": [
+    {
+      "name": "bookcatalogue",
+      "features": ["tracing-jaeger", "management"]
+    },
+    {
+      "name": "bookinventory",
+      "features": ["tracing-jaeger", "management"]
+    },
+    {
+      "name": "bookrecommendation",
+      "features": ["tracing-jaeger", "management", "reactor"]
+    }
+  ]
+```
+The features need to be **valid** features from Starter because the list is used directly when generating the applications using Starter infrastructure. If you need a feature that is not available on Starter, create it in `buildSrc/src/main/java/io/micronaut/guides/feature`. Also declare the GAV coordinates and version in `buildSrc/src/main/resources/pom.xml`. Dependabot is configured in this project to look for that file and send pull requests to update the dependencies.
+
+Inside the specific guide directory there should be a directory per language with the appropriate directory structure. All these files will be copied into the final guide directory after the guide is generated.
+
+```shell
+netty-data
+├── groovy
+│     └── src
+│         ├── main
+│         │     └── groovy
+│         │         └── example
+│         │             └── micronaut
+│         └── test
+│             └── groovy
+│                 └── example
+│                     └── micronaut
+├── java
+│     └── src
+│         ├── main
+│         │     └── java
+│         │         └── example
+│         │             └── micronaut
+│         └── test
+│             └── java
+│                 └── example
+│                     └── micronaut
+├── kotlin
+│     └── src
+│         ├── main
+│         │     └── kotlin
+│         │         └── example
+│         │             └── micronaut
+│         └── test
+│             └── kotlin
+│                 └── example
+│                     └── micronaut
+└── src
+    └── main
+        └── resources
+```
+
+For multi-applications guides there needs to be an additional directory with the name of the application declared in `metadata.json` file:
+
+```shell
+netty-data
+├── bookcatalogue
+│     ├── groovy
+│     │    ...
+│     ├── java
+│     │    ...
+│     └── kotlin
+│          ...
+├── bookinventory
+│     ├── groovy
+│     │    ...
+│     ├── java
+│     │    ...
+│     └── kotlin
+│          ...
+└── bookrecommendation
+      ├── groovy
+      │    ...
+      ├── java
+      │    ...
+      └── kotlin
+```
+
+## GitHub Actions
+
+There is a single job which Runs everytime we send a pull request or something is merged in `master`. The `test.sh` script explained before is executed.

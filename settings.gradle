@@ -1,3 +1,4 @@
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -6,14 +7,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '5.3.14'
+    id("io.micronaut.build.internal.gradle-enterprise") version("5.3.14")
 }
 
-rootProject.name = 'project-template-parent'
-
-include 'project-template'
-include 'project-template-bom'
-
-micronautBuild {
-    importMicronautCatalog()
-}
+rootProject.name = "micronaut-crac-tests"
