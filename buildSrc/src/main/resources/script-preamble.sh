@@ -6,7 +6,7 @@ EXIT_STATUS=0
 profile() {
   local JAR=$1
   echo "Vanilla test"
-  local PROCESS=$(utils/start-bg.sh \
+  local PROCESS=$(../utils/start-bg.sh \
       -s "Startup completed" \
       java -jar $JAR)
   curl localhost:8080/hello/test | grep "Hello test!"
