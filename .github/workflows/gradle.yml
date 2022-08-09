@@ -45,12 +45,12 @@ jobs:
       - name: Build the utils
         run: |
           make -C utils
-          echo UTILS=$(pwd)/utils >> $GITHUB_ENV
+          echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
       - name: Download CRaC JDK
         run: |
           archive=$(utils/download-jdk.sh)
           sudo tar -axf $archive
-          echo JDK=${archive%%.tar.gz} >> $GITHUB_ENV
+          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:
