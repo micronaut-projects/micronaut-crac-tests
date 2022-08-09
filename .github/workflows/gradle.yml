@@ -39,7 +39,9 @@ jobs:
           repository: CRaC/utils
           path: utils
       - name: Build the utils
-        run: make -C utils
+        run: |
+          make -C utils
+          echo UTILS=$(pwd)/utils >> $GITHUB_ENV
       - name: Download CRaC JDK
         run: |
           archive=$(utils/download-jdk.sh)
