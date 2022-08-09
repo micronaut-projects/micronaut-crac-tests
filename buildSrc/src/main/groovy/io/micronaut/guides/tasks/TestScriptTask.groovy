@@ -34,6 +34,6 @@ abstract class TestScriptTask extends DefaultTask {
 
     @TaskAction
     def perform() {
-        TestScriptGenerator.generateTestScript(scriptFile.get().asFile.parentFile, Collections.singletonList(metadata), false)
+        TestScriptGenerator.generateTestScript(scriptFile.get().asFile.parentFile, Collections.singletonList(metadata))
     }
 }

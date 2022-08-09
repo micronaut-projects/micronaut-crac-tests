@@ -3,6 +3,8 @@ package io.micronaut.guides
 import groovy.transform.CompileStatic
 import io.micronaut.starter.options.BuildTool
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.stream.Collectors
 
 import static io.micronaut.guides.CracProjectGenerator.DEFAULT_APP_NAME
@@ -14,11 +16,6 @@ class TestScriptGenerator {
 
     public static final String GITHUB_WORKFLOW_JAVA_CI = 'Java CI'
     public static final String ENV_GITHUB_WORKFLOW = 'GITHUB_WORKFLOW'
-    public static final String EMPTY_SCRIPT = '''\
-#!/usr/bin/env bash
-set -e
-exit 0
-'''
 
     private static List<String> guidesChanged(List<String> changedFiles) {
         changedFiles.findAll { path ->
@@ -61,7 +58,6 @@ exit 0
 
     static String generateScript(File guidesFolder,
                                  String metadataConfigName,
-                                 boolean stopIfFailure,
                                  List<String> changedFiles) {
         List<String> slugsChanged = guidesChanged(changedFiles)
         boolean forceExecuteEveryTest = changesMicronautVersion(changedFiles) ||
@@ -71,16 +67,13 @@ exit 0
                 (!changedFiles && !System.getenv(ENV_GITHUB_WORKFLOW))
 
         List<CracMetadata> metadatas = CracProjectGenerator.parseAllMetadata(guidesFolder, metadataConfigName)
-        metadatas = metadatas.stream()
-                .filter(metadata -> !shouldSkip(metadata, slugsChanged, forceExecuteEveryTest))
-                .collect(Collectors.toList())
-        generateScript(metadatas, stopIfFailure)
+        metadatas = metadatas.findAll { !shouldSkip(it, slugsChanged, forceExecuteEveryTest) }
+        generateScript(metadatas)
     }
 
     static void generateTestScript(File output,
-                                   List<CracMetadata> metadatas,
-                                   boolean stopIfFailure) {
-        String script = generateScript(metadatas, stopIfFailure)
+                                   List<CracMetadata> metadatas) {
+        String script = generateScript(metadatas)
         generateTestScript(output, script)
     }
 
@@ -91,31 +84,25 @@ exit 0
         testScript.executable = true
     }
 
-    static String generateScript(List<CracMetadata> metadatas,
-                                 boolean stopIfFailure) {
-        StringBuilder bashScript = new StringBuilder('''\
-#!/usr/bin/env bash
-set -e
-FAILED_PROJECTS=()
-EXIT_STATUS=0
-''')
-
+    static String generateScript(List<CracMetadata> metadatas) {
+        def i = TestScriptGenerator.getResourceAsStream("/script-preamble.sh")
+        String collect = new BufferedReader(new InputStreamReader(i)).text
+        StringBuilder bashScript = new StringBuilder(collect)
         metadatas.sort { it.slug }
         for (CracMetadata metadata : metadatas) {
             List<CracOption> guidesOptionList = CracProjectGenerator.guidesOptions(metadata)
-            bashScript << """\
-"""
+            bashScript.append("\n")
             for (CracOption guidesOption : guidesOptionList) {
                 String folder = CracProjectGenerator.folderName(metadata.slug, guidesOption)
                 BuildTool buildTool = folder.contains(MAVEN.toString()) ? MAVEN : GRADLE
                 if (metadata.apps.any { it.name == DEFAULT_APP_NAME } ) {
-                    bashScript << scriptForFolder(folder, folder, stopIfFailure, buildTool)
+                    bashScript << scriptForFolder(folder, folder, buildTool)
                 } else {
                     bashScript << """\
 cd $folder
 """
                     for (CracMetadata.App app : metadata.apps) {
-                        bashScript << scriptForFolder(app.name, folder + '/' + app.name, stopIfFailure, buildTool)
+                        bashScript << scriptForFolder(app.name, folder + '/' + app.name, buildTool)
                     }
                     bashScript << """\
 cd ..
@@ -124,8 +111,7 @@ cd ..
             }
         }
 
-        if (!stopIfFailure) {
-            bashScript << '''
+        bashScript << '''
 if [ ${#FAILED_PROJECTS[@]} -ne 0 ]; then
   echo ""
   echo "-------------------------------------------------"
@@ -139,37 +125,28 @@ else
   exit 0
 fi
 '''
-        }
 
         bashScript
     }
 
-    private static String scriptForFolder(String nestedFolder, String folder,
-                                          boolean stopIfFailure, BuildTool buildTool) {
+    private static String scriptForFolder(String nestedFolder, String folder, BuildTool buildTool) {
         String bashScript = """\
 cd $nestedFolder
 echo "-------------------------------------------------"
-echo "Executing '$folder' tests"
-${buildTool == MAVEN ? './mvnw -q test' : './gradlew -q test' } || EXIT_STATUS=\$?
+echo "Building '$folder'"
+${buildTool == MAVEN ? './mvnw clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
+profile ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' }
 cd ..
 """
-        if (stopIfFailure) {
-            bashScript += """\
-if [ \$EXIT_STATUS -ne 0 ]; then
-  echo "'$folder' tests failed => exit \$EXIT_STATUS"
-  exit \$EXIT_STATUS
-fi
-"""
-        } else {
-            bashScript += """\
+        bashScript += """\
 if [ \$EXIT_STATUS -ne 0 ]; then
   FAILED_PROJECTS=("\${FAILED_PROJECTS[@]}" $folder)
   echo "'$folder' tests failed => exit \$EXIT_STATUS"
 fi
 EXIT_STATUS=0
-"""
-        }
 
+
+"""
         bashScript
     }
 }

@@ -1,4 +1,5 @@
 {
+  "languages": ["java"],
   "apps": [
     {
       "name": "default",
