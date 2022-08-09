@@ -33,7 +33,11 @@ jobs:
           DEBIAN_FRONTEND=noninteractive
           apt-get -y --no-install-recommends install
           siege
-      - name: Checkout utils
+      - name: Checkout this project
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Checkout the utils
         uses: actions/checkout@v2
         with:
           repository: CRaC/utils
@@ -47,9 +51,6 @@ jobs:
           archive=$(utils/download-jdk.sh)
           sudo tar -axf $archive
           echo JDK=${archive%%.tar.gz} >> $GITHUB_ENV
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:

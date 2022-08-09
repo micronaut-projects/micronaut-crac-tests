@@ -3,10 +3,6 @@ set -e
 FAILED_PROJECTS=()
 EXIT_STATUS=0
 
-echo "=== Utils located at $UTILS"
-echo "--- utils parent:"
-ls $UTILS/..
-
 profile() {
   local JAR=$1
   echo "Vanilla test"
