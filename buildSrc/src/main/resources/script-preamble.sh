@@ -3,6 +3,8 @@ set -e
 FAILED_PROJECTS=()
 EXIT_STATUS=0
 
+echo "=== Utils located at '$UTILS'"
+echo "=== CRaC JDK located at '$JDK'"
 profile() {
   local JAR=$1
   echo "Vanilla test"
@@ -17,7 +19,7 @@ profile() {
   PROCESS=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
-      ${{ env.JDK }}/bin/java \
+      $JDK/bin/java \
       -XX:CRaCCheckpointTo=cr \
       -XX:+UnlockDiagnosticVMOptions \
       -XX:+CRTraceStartupTime \
@@ -32,11 +34,11 @@ profile() {
   echo "Test restore"
   PROCESS=$($UTILS/start-bg.sh \
       -s "restore-finish" \
-      ${{ env.JDK }}/bin/java -XX:CRaCRestoreFrom=cr)
+      $JDK/bin/java -XX:CRaCRestoreFrom=cr)
   curl localhost:8080/hello/test | grep "Hello test!"
   $UTILS/bench.sh http://localhost:8080/hello/test
   kill $PROCESS
 
   echo "Check startup time"
-  timeout 3 bash -c "$UTILS/javatime ; ${{ env.JDK }}/bin/java -XX:CRaCRestoreFrom=cr" | ../utils/sel.awk -v from=prestart -v to=restore-finish
+  timeout 3 bash -c "$UTILS/javatime ; $JDK/bin/java -XX:CRaCRestoreFrom=cr" | ../utils/sel.awk -v from=prestart -v to=restore-finish
 }
