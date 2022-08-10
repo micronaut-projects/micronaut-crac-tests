@@ -1,4 +1,4 @@
-package io.micronaut.guides
+package io.micronaut.crac
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic

@@ -1,10 +1,8 @@
-package io.micronaut.guides
+package io.micronaut.crac
 
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import io.micronaut.starter.application.ApplicationType
-
-import java.time.LocalDate
 
 @ToString(includeNames = true)
 @CompileStatic

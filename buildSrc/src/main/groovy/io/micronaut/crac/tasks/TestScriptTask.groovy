@@ -1,8 +1,8 @@
-package io.micronaut.guides.tasks
+package io.micronaut.crac.tasks
 
 import groovy.transform.CompileStatic
-import io.micronaut.guides.CracMetadata
-import io.micronaut.guides.TestScriptGenerator
+import io.micronaut.crac.CracMetadata
+import io.micronaut.crac.TestScriptGenerator
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property

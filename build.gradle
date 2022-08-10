@@ -1,3 +1,3 @@
-import io.micronaut.guides.CracPlugin
+import io.micronaut.crac.CracPlugin
 
 apply plugin: CracPlugin

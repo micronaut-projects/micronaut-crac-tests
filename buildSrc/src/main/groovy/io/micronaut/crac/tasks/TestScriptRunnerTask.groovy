@@ -1,4 +1,4 @@
-package io.micronaut.guides.tasks
+package io.micronaut.crac.tasks
 
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask

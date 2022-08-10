@@ -1,13 +1,9 @@
-package io.micronaut.guides
+package io.micronaut.crac
 
 import groovy.transform.CompileStatic
 import io.micronaut.starter.options.BuildTool
 
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.stream.Collectors
-
-import static io.micronaut.guides.CracProjectGenerator.DEFAULT_APP_NAME
+import static CracProjectGenerator.DEFAULT_APP_NAME
 import static io.micronaut.starter.options.BuildTool.GRADLE
 import static io.micronaut.starter.options.BuildTool.MAVEN
 

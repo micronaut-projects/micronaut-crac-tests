@@ -1,8 +1,8 @@
-package io.micronaut.guides.tasks
+package io.micronaut.crac.tasks
 
 import groovy.transform.CompileStatic
-import io.micronaut.guides.CracMetadata
-import io.micronaut.guides.CracProjectGenerator
+import io.micronaut.crac.CracMetadata
+import io.micronaut.crac.CracProjectGenerator
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property

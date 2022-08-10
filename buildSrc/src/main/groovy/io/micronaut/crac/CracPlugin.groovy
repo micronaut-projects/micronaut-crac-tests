@@ -1,9 +1,9 @@
-package io.micronaut.guides
+package io.micronaut.crac
 
 import groovy.transform.CompileStatic
-import io.micronaut.guides.tasks.SampleProjectGenerationTask
-import io.micronaut.guides.tasks.TestScriptRunnerTask
-import io.micronaut.guides.tasks.TestScriptTask
+import io.micronaut.crac.tasks.SampleProjectGenerationTask
+import io.micronaut.crac.tasks.TestScriptRunnerTask
+import io.micronaut.crac.tasks.TestScriptTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -34,9 +34,9 @@ class CracPlugin implements Plugin<Project> {
                 .collect { metadata ->
                     String taskSlug = kebabCaseToGradleName(metadata.slug)
 
-                    TaskProvider<SampleProjectGenerationTask> generateTask = registerGenerateTask(project, metadata, projectGenerator, cracTestDir, codeDir, taskSlug)
-                    TaskProvider<TestScriptTask> testScriptTask = registerTestScriptTask(project, taskSlug, metadata, generateTask)
-                    TaskProvider<TestScriptRunnerTask> testScriptRunnerTask = registerTestScriptRunnerTask(project, taskSlug, metadata, testScriptTask)
+                    def generateTask = registerGenerateTask(project, metadata, projectGenerator, cracTestDir, codeDir, taskSlug)
+                    def testScriptTask = registerTestScriptTask(project, taskSlug, metadata, generateTask)
+                    def testScriptRunnerTask = registerTestScriptRunnerTask(project, taskSlug, metadata, testScriptTask)
                     registerCracBuild(project, taskSlug, metadata, testScriptTask, testScriptRunnerTask)
                 }
 

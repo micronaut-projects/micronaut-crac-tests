@@ -1,4 +1,4 @@
-package io.micronaut.guides
+package io.micronaut.crac
 
 import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
@@ -6,8 +6,6 @@ import groovy.transform.CompileStatic
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.annotation.Nullable
-import io.micronaut.crac.CracGenerator
-import io.micronaut.guides.CracMetadata.App
 import io.micronaut.starter.api.TestFramework
 import io.micronaut.starter.application.ApplicationType
 import io.micronaut.starter.options.BuildTool
@@ -82,11 +80,11 @@ class CracProjectGenerator implements AutoCloseable {
                 slug: dir.name,
                 base: config.base,
                 skip: config.skip,
-                languages: config.languages ?: ['java', 'groovy', 'kotlin'],
-                buildTools: config.buildTools ?: ['gradle', 'maven'],
+                languages: config.languages as List<String> ?: ['java', 'groovy', 'kotlin'],
+                buildTools: config.buildTools as List<String> ?: ['gradle', 'maven'],
                 testFramework: config.testFramework,
                 apps: config.apps.collect { it ->
-                    new App(
+                    new CracMetadata.App(
                             name: it.name,
                             features: it.features ?: [],
                             applicationType: it.applicationType ? ApplicationType.valueOf(it.applicationType.toUpperCase()) : ApplicationType.DEFAULT,
@@ -109,7 +107,7 @@ class CracProjectGenerator implements AutoCloseable {
             TestFramework testFramework = option.testFramework
             Language lang = option.language
 
-            for (App app : metadata.apps) {
+            for (CracMetadata.App app : metadata.apps) {
                 List<String> appFeatures = [] + app.features
 
                 // typical guides use 'default' as name, multi-project guides have different modules
@@ -195,22 +193,22 @@ class CracProjectGenerator implements AutoCloseable {
         merged
     }
 
-    private static List<App> mergeApps(CracMetadata base, CracMetadata metadata) {
+    private static List<CracMetadata.App> mergeApps(CracMetadata base, CracMetadata metadata) {
 
-        Map<String, App> baseApps = base.apps.collectEntries { [(it.name): it] }
-        Map<String, App> guideApps = metadata.apps.collectEntries { [(it.name): it] }
+        Map<String, CracMetadata.App> baseApps = base.apps.collectEntries { [(it.name): it] }
+        Map<String, CracMetadata.App> guideApps = metadata.apps.collectEntries { [(it.name): it] }
 
         Set<String> baseOnly = baseApps.keySet() - guideApps.keySet()
         Set<String> guideOnly = guideApps.keySet() - baseApps.keySet()
         Collection<String> inBoth = baseApps.keySet().intersect(guideApps.keySet())
 
-        List<App> merged = []
+        List<CracMetadata.App> merged = []
         merged.addAll(baseOnly.collect { baseApps[it] })
         merged.addAll(guideOnly.collect { guideApps[it] })
 
         for (String name : inBoth) {
-            App baseApp = baseApps[name]
-            App guideApp = guideApps[name]
+            CracMetadata.App baseApp = baseApps[name]
+            CracMetadata.App guideApp = guideApps[name]
             guideApp.features.addAll baseApp.features
             merged << guideApp
         }

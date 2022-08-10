@@ -1,4 +1,4 @@
-package io.micronaut.guides.tasks
+package io.micronaut.crac.tasks
 
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.util.TeeOutputStream
@@ -21,8 +21,8 @@ abstract class TestScriptRunnerWorkAction implements WorkAction<TestScriptRunner
         File workDir = parameters.testScript.get().asFile.parentFile
         try (OutputStream file = new FileOutputStream(parameters.outputFile.get().asFile)) {
             ExecResult result = execOperations.exec(execSpec -> {
-                OutputStream oldOut = execSpec.getStandardOutput();
-                OutputStream oldErr = execSpec.getErrorOutput();
+                OutputStream oldOut = execSpec.standardOutput
+                OutputStream oldErr = execSpec.errorOutput
                 execSpec
                         .commandLine("./test.sh")
                         .setStandardOutput(new TeeOutputStream(oldOut, file))
