@@ -28,6 +28,8 @@ profile() {
 
   echo "Warmup"
   $UTILS/bench.sh http://localhost:8080/hello/test
+
+  echo "Make a checkpoint"
   jcmd $PROCESS JDK.checkpoint
   [ 137 = $($UTILS/read-exitcode.sh exitcode) ]
 
