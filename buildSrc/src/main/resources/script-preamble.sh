@@ -40,6 +40,6 @@ profile() {
   kill $PROCESS
 
   echo "Check startup time"
-  timeout 3 bash -c "$UTILS/javatime ; $JDK/bin/java -XX:CRaCRestoreFrom=cr" | $UTILS/sel.awk -v from=prestart -v to=restore-finish
+  timeout 3 bash -c "$UTILS/javatime ; $JDK/bin/java -XX:CRaCRestoreFrom=cr"# | $UTILS/sel.awk -v from=prestart -v to=restore-finish
   return
 }
