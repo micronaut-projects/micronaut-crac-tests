@@ -50,16 +50,17 @@ testcheckpoint() {
   local foundExitCode="$(readexitcode exitcode)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected exit code 137, got $foundExitCode"
-    exit 1
+    kill $PROCESS
+    return 1
+  else
+    echo "Test restore"
+    PROCESS=$($UTILS/start-bg.sh \
+        -s "restore-finish" \
+        $JDK/bin/java -XX:CRaCRestoreFrom=cr)
+    RESPONSE=$(curl -s localhost:8080/hello/test)
+    if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
+    kill $PROCESS
+    echo "Remove Checkpoint"
+    rm -rf cr
   fi
-
-  echo "Test restore"
-  PROCESS=$($UTILS/start-bg.sh \
-      -s "restore-finish" \
-      $JDK/bin/java -XX:CRaCRestoreFrom=cr)
-  RESPONSE=$(curl -s localhost:8080/hello/test)
-  if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
-  kill $PROCESS
-  echo "Remove Checkpoint"
-  rm -rf cr
 }
