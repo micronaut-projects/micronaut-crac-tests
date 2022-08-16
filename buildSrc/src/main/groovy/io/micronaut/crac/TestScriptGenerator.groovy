@@ -91,6 +91,12 @@ class TestScriptGenerator {
             for (CracOption guidesOption : guidesOptionList) {
                 String folder = CracProjectGenerator.folderName(metadata.slug, guidesOption)
                 BuildTool buildTool = folder.contains(MAVEN.toString()) ? MAVEN : GRADLE
+                if (buildTool == MAVEN && metadata.skipMavenTests) {
+                    continue
+                }
+                if (buildTool == GRADLE && metadata.skipGradleTests) {
+                    continue
+                }
                 if (metadata.apps.any { it.name == DEFAULT_APP_NAME } ) {
                     bashScript << scriptForFolder(folder, folder, buildTool)
                 } else {
@@ -130,8 +136,12 @@ fi
 cd $nestedFolder
 echo "-------------------------------------------------"
 echo "Building '$folder'"
-${buildTool == MAVEN ? './mvnw clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
-testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' }
+${buildTool == MAVEN ? './mvnw --no-transfer-progress clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
+echo "Build exit code: \$EXIT_STATUS"
+if [ \$EXIT_STATUS -eq 0 ]; then
+    testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' } || EXIT_STATUS=\$?
+    echo "testcheckpoint exit code: \$EXIT_STATUS"
+fi
 cd ..
 """
         bashScript += """\

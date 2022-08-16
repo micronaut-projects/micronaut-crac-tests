@@ -1,10 +1,12 @@
 {
   "languages": ["java"],
   "base": "hello-base",
+  "skipMavenTests": true,
+  "skipGradleTests": true,
   "apps": [
     {
       "name": "default",
-      "features": ["crac"]
+      "features": ["crac", "tomcat-server"]
     }
   ]
 }

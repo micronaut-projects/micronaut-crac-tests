@@ -17,6 +17,9 @@ class CracMetadata {
     List<String> languages
     String testFramework
 
+    boolean skipGradleTests
+    boolean skipMavenTests
+
     List<App> apps
 
     @ToString(includeNames = true)

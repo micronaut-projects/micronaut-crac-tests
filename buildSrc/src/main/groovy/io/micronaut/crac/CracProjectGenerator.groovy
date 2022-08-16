@@ -83,6 +83,8 @@ class CracProjectGenerator implements AutoCloseable {
                 languages: config.languages as List<String> ?: ['java', 'groovy', 'kotlin'],
                 buildTools: config.buildTools as List<String> ?: ['gradle', 'maven'],
                 testFramework: config.testFramework,
+                skipGradleTests: config.skipGradleTests ?: false,
+                skipMavenTests: config.skipMavenTests ?: false,
                 apps: config.apps.collect { it ->
                     new CracMetadata.App(
                             name: it.name,
@@ -184,10 +186,14 @@ class CracProjectGenerator implements AutoCloseable {
 
     private static CracMetadata mergeMetadatas(CracMetadata base, CracMetadata metadata) {
         CracMetadata merged = new CracMetadata()
+        merged.slug = metadata.slug
         merged.base = metadata.base
+        merged.skip = metadata.skip
         merged.buildTools = metadata.buildTools ?: base.buildTools
         merged.languages = metadata.languages ?: base.languages
         merged.testFramework = metadata.testFramework ?: base.testFramework
+        merged.skipGradleTests = base.skipGradleTests || metadata.skipGradleTests
+        merged.skipMavenTests = base.skipMavenTests || metadata.skipMavenTests
         merged.apps = mergeApps(base, metadata)
 
         merged
