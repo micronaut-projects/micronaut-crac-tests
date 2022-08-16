@@ -8,6 +8,7 @@ echo "=== CRaC JDK located at '$JDK'"
 
 readexitcode() {
   local exitcode=$1
+  local process=$2
   local retries=120 # 1 minute of 0.5 second sleeps
   e=$(head $exitcode 2>/dev/null)
   while [ ! $e ] && [ $retries -gt 0 ]; do
@@ -18,6 +19,7 @@ readexitcode() {
   rm $exitcode
   if [ $retries -le 0 ]; then
     echo "Timeout waiting for $1"
+    kill process
   else
     echo $e
   fi
@@ -47,7 +49,7 @@ testcheckpoint() {
       -jar $JAR)
   echo "Make checkpoint"
   jcmd $PROCESS JDK.checkpoint
-  local foundExitCode="$(readexitcode exitcode)"
+  local foundExitCode="$(readexitcode exitcode $PROCESS)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected exit code 137, got $foundExitCode"
     exit 1

@@ -131,7 +131,9 @@ cd $nestedFolder
 echo "-------------------------------------------------"
 echo "Building '$folder'"
 ${buildTool == MAVEN ? './mvnw clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
-(testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' }) || exit \$?
+result="\$(testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' })
+exitCode=\$?
+echo "Test checkpoint exit code: \$exitCode (\$result)"
 cd ..
 """
         bashScript += """\
