@@ -5,6 +5,24 @@ EXIT_STATUS=0
 
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
+
+readexitcode() {
+  local exitcode=$1
+  local retries=120 # 1 minute of 0.5 second sleeps
+  e=$(head $exitcode 2>/dev/null)
+  while [ ! $e ] && [ $retries -gt 0 ]; do
+    sleep 0.5
+    e=$(head $exitcode 2>/dev/null)
+    retries=$((retries-1))
+  done
+  if [ $retries -le 0 ]; then
+    echo "ERROR: Timeout waiting for $1"
+    exit 1
+  fi
+  echo $e
+  rm $exitcode
+}
+
 testcheckpoint() {
   local JAR=$1
   echo "Vanilla test"
@@ -29,7 +47,7 @@ testcheckpoint() {
       -jar $JAR)
   echo "Make checkpoint"
   jcmd $PROCESS JDK.checkpoint
-  [ 137 = $($UTILS/read-exitcode.sh exitcode) ]
+  [ 137 = $(readexitcode exitcode) ]
 
   echo "Test restore"
   PROCESS=$($UTILS/start-bg.sh \
