@@ -188,7 +188,7 @@ class CracProjectGenerator implements AutoCloseable {
         CracMetadata merged = new CracMetadata()
         merged.slug = metadata.slug
         merged.base = metadata.base
-        merged.skip = base.skip || metadata.skip
+        merged.skip = metadata.skip
         merged.buildTools = metadata.buildTools ?: base.buildTools
         merged.languages = metadata.languages ?: base.languages
         merged.testFramework = metadata.testFramework ?: base.testFramework
