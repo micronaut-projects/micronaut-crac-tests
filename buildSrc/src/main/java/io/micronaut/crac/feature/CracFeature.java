@@ -45,7 +45,7 @@ public class CracFeature implements Feature {
     @Override
     public void apply(GeneratorContext generatorContext) {
         generatorContext.addDependency(Dependency.builder()
-            .lookupArtifactId("org-crac")
+            .lookupArtifactId("micronaut-crac")
             .runtime());
     }
 }
