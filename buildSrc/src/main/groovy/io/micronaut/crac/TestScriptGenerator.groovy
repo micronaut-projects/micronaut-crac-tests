@@ -91,6 +91,12 @@ class TestScriptGenerator {
             for (CracOption guidesOption : guidesOptionList) {
                 String folder = CracProjectGenerator.folderName(metadata.slug, guidesOption)
                 BuildTool buildTool = folder.contains(MAVEN.toString()) ? MAVEN : GRADLE
+                if (buildTool == MAVEN && metadata.skipMavenTests) {
+                    continue
+                }
+                if (buildTool == GRADLE && metadata.skipGradleTests) {
+                    continue
+                }
                 if (metadata.apps.any { it.name == DEFAULT_APP_NAME } ) {
                     bashScript << scriptForFolder(folder, folder, buildTool)
                 } else {
