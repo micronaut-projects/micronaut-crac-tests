@@ -13,9 +13,9 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>io.github.crac</groupId>
-            <artifactId>org-crac</artifactId>
-            <version>0.1.3</version>
+            <groupId>io.micronaut.crac</groupId>
+            <artifactId>micronaut-crac</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 </project>

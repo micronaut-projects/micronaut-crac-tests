@@ -8,6 +8,7 @@ import io.micronaut.starter.application.ApplicationType;
 import io.micronaut.starter.application.Project;
 import io.micronaut.starter.application.generator.GeneratorContext;
 import io.micronaut.starter.application.generator.ProjectGenerator;
+import io.micronaut.starter.build.dependencies.Dependency;
 import io.micronaut.starter.io.ConsoleOutput;
 import io.micronaut.starter.io.FileSystemOutputHandler;
 import io.micronaut.starter.options.BuildTool;
@@ -23,8 +24,11 @@ import javax.validation.constraints.Pattern;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static io.micronaut.http.HttpStatus.BAD_REQUEST;
 import static io.micronaut.starter.options.BuildTool.GRADLE;
@@ -34,6 +38,9 @@ import static io.micronaut.starter.options.JdkVersion.JDK_17;
 public class CracGenerator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CracGenerator.class);
+    public static final String SNAPSHOT_REPO = "https://s01.oss.sonatype.org/content/repositories/snapshots";
+    public static final String GRADLE_SNAPSHOT_REPO = "    maven { url = '" + SNAPSHOT_REPO + "' }";
+    public static final String MAVEN_SONATYPE_ID = "      <id>sonatype</id>";
 
     private final ProjectGenerator projectGenerator;
 
@@ -56,9 +63,40 @@ public class CracGenerator {
                     generatorContext.getProject(),
                     new FileSystemOutputHandler(directory, ConsoleOutput.NOOP),
                     generatorContext);
+            Optional<Dependency> micronautCrac = generatorContext
+                .getDependencies()
+                .stream()
+                .filter(dependency -> "micronaut-crac".equals(dependency.getArtifactId()))
+                .findFirst();
+            if (micronautCrac.map(Dependency::getVersion).map(v -> v.endsWith("-SNAPSHOT")).orElse(false)) {
+                addSnapshotDependency(buildTool, directory);
+            }
         } catch (Exception e) {
             LOG.error("Error generating application: " + e.getMessage(), e);
             throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private void addSnapshotDependency(BuildTool buildTool, File directory) throws IOException {
+        if (buildTool == null || buildTool.isGradle()) {
+            Path script = directory.toPath().resolve("build.gradle");
+            List<String> lines = Files.readAllLines(script);
+            if (!lines.contains(GRADLE_SNAPSHOT_REPO)) {
+                int index = lines.indexOf("repositories {");
+                lines.add(index + 1, GRADLE_SNAPSHOT_REPO);
+                Files.writeString(script, String.join("\n", lines));
+            }
+        } else {
+            Path script = directory.toPath().resolve("pom.xml");
+            List<String> lines = Files.readAllLines(script);
+            if (!lines.contains(MAVEN_SONATYPE_ID)) {
+                int index = lines.indexOf("  <repositories>");
+                lines.add(index + 1, "    <repository>\n" +
+                    MAVEN_SONATYPE_ID + "\n" +
+                    "      <url>" + SNAPSHOT_REPO + "</url>\n" +
+                    "    </repository>");
+                Files.writeString(script, String.join("\n", lines));
+            }
         }
     }
 
