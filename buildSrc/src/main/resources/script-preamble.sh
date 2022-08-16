@@ -8,7 +8,7 @@ echo "=== CRaC JDK located at '$JDK'"
 
 readexitcode() {
   local exitcode=$1
-  local retries=120 # 1 minute of 0.5 second sleeps
+  local retries=60 # 30 seconds of 0.5 second sleeps
   e=$(head $exitcode 2>/dev/null)
   while [ ! $e ] && [ $retries -gt 0 ]; do
     sleep 0.5
