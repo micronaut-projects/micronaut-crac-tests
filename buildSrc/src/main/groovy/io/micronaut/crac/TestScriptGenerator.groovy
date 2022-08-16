@@ -130,7 +130,7 @@ fi
 cd $nestedFolder
 echo "-------------------------------------------------"
 echo "Building '$folder'"
-${buildTool == MAVEN ? './mvnw clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
+${buildTool == MAVEN ? './mvnw --no-transfer-progress clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
 echo "Build exit code: \$EXIT_STATUS"
 if [ \$EXIT_STATUS -ne 0 ]; then
     testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' } || EXIT_STATUS=\$?
