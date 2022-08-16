@@ -15,12 +15,12 @@ readexitcode() {
     e=$(head $exitcode 2>/dev/null)
     retries=$((retries-1))
   done
-  if [ $retries -le 0 ]; then
-    echo "ERROR: Timeout waiting for $1"
-    exit 1
-  fi
-  echo $e
   rm $exitcode
+  if [ $retries -le 0 ]; then
+    echo "Timeout waiting for $1"
+  else
+    echo $e
+  fi
 }
 
 testcheckpoint() {
@@ -47,7 +47,11 @@ testcheckpoint() {
       -jar $JAR)
   echo "Make checkpoint"
   jcmd $PROCESS JDK.checkpoint
-  [ 137 = $(readexitcode exitcode) ]
+  local foundExitCode="$(readexitcode exitcode)"
+  if [ "137" != "$foundExitCode" ]; then
+    echo "ERROR: Expected exit code 137, got $foundExitCode"
+    exit 1
+  fi
 
   echo "Test restore"
   PROCESS=$($UTILS/start-bg.sh \
