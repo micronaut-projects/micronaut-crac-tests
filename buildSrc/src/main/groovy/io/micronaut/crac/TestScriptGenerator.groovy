@@ -131,7 +131,7 @@ cd $nestedFolder
 echo "-------------------------------------------------"
 echo "Building '$folder'"
 ${buildTool == MAVEN ? './mvnw clean package' : './gradlew assemble' } || EXIT_STATUS=\$?
-profile ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' }
+testcheckpoint ${buildTool == MAVEN ? 'target/micronautguide-0.1.jar' : 'build/libs/micronautguide-0.1-all.jar' }
 cd ..
 """
         bashScript += """\

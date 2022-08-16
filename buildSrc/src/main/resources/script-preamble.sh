@@ -5,14 +5,16 @@ EXIT_STATUS=0
 
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
-profile() {
+testcheckpoint() {
   local JAR=$1
   echo "Vanilla test"
   local PROCESS=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       java -jar $JAR)
-  curl localhost:8080/hello/test | grep "Hello test!"
-  $UTILS/bench.sh http://localhost:8080/hello/test
+
+  EXPECTED_RESPONSE='Hello test!'
+  RESPONSE=$(curl -s localhost:8080/hello/test)
+  if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
   kill $PROCESS
 
   echo "Prepare checkpoint"
@@ -25,9 +27,7 @@ profile() {
       -XX:+CRTraceStartupTime \
       -Djdk.crac.trace-startup-time=true \
       -jar $JAR)
-
-  echo "Warmup"
-  $UTILS/bench.sh http://localhost:8080/hello/test
+  echo "Make checkpoint"
   jcmd $PROCESS JDK.checkpoint
   [ 137 = $($UTILS/read-exitcode.sh exitcode) ]
 
@@ -35,10 +35,9 @@ profile() {
   PROCESS=$($UTILS/start-bg.sh \
       -s "restore-finish" \
       $JDK/bin/java -XX:CRaCRestoreFrom=cr)
-  curl localhost:8080/hello/test | grep "Hello test!"
-  $UTILS/bench.sh http://localhost:8080/hello/test
+  RESPONSE=$(curl -s localhost:8080/hello/test)
+  if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
   kill $PROCESS
-
-  echo "Check startup time"
-  timeout 3 bash -c "$UTILS/javatime ; $JDK/bin/java -XX:CRaCRestoreFrom=cr" | $UTILS/sel.awk -v from=prestart -v to=restore-finish
+  echo "Remove Checkpoint"
+  rm -rf cr
 }
