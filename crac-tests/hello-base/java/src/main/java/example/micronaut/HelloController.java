@@ -10,8 +10,14 @@ import java.util.Optional;
 @Controller
 public class HelloController {
 
+    private final AppConfig appConfig;
+
+    public HelloController(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
     @Get("/hello{/name}")
     public String hello(@Nullable String name) {
-        return "Hello " + (name == null ? "world" : name) + "!";
+        return "Hello " + (name == null ? appConfig.getSuffix() : name) + "!";
     }
 }
