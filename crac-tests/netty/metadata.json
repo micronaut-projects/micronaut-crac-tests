@@ -1,6 +1,7 @@
 {
   "languages": ["java"],
   "base": "hello-base",
+  "skipMavenTests": true,
   "apps": [
     {
       "name": "default",

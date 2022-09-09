@@ -2,65 +2,39 @@
 set -e
 FAILED_PROJECTS=()
 EXIT_STATUS=0
+DELAY=30
 
-echo "=== Utils located at '$UTILS'"
-echo "=== CRaC JDK located at '$JDK'"
-
-readexitcode() {
-  local exitcode=$1
-  local retries=60 # 30 seconds of 0.5 second sleeps
-  e=$(head $exitcode 2>/dev/null)
-  while [ ! $e ] && [ $retries -gt 0 ]; do
-    sleep 0.5
-    e=$(head $exitcode 2>/dev/null)
-    retries=$((retries-1))
+execute() {
+  # We only want to wait  seconds for success
+  local end=$((SECONDS+DELAY))
+  while ! curl -s http://localhost:8080/hello/tim; do
+    if [ $SECONDS -gt $end ]; then
+      echo "No response from the app in $DELAY seconds"
+      return 1
+    fi
+    sleep 0.001;
   done
-  rm $exitcode
-  if [ $retries -le 0 ]; then
-    echo "Timeout waiting for $1"
-  else
-    echo $e
-  fi
 }
 
-testcheckpoint() {
-  local JAR=$1
-  echo "Vanilla test"
-  local PROCESS=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      java -jar $JAR)
+foo=$(TIMEFORMAT="%U"; time sleep 2)
 
-  EXPECTED_RESPONSE='Hello test!'
-  RESPONSE=$(curl -s localhost:8080/hello/test)
-  if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
-  kill $PROCESS
+time_to_first_request() {
+  CONTAINER=$(docker run -d -p 8080:8080 micronautguide:0.1)
+  time execute || EXIT_STATUS=$?
+  docker stop $CONTAINER
+}
 
-  echo "Prepare checkpoint"
-  PROCESS=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      -e exitcode \
-      $JDK/bin/java \
-      -XX:CRaCCheckpointTo=cr \
-      -XX:+UnlockDiagnosticVMOptions \
-      -XX:+CRTraceStartupTime \
-      -Djdk.crac.trace-startup-time=true \
-      -jar $JAR)
-  echo "Make checkpoint"
-  jcmd $PROCESS JDK.checkpoint
-  local foundExitCode="$(readexitcode exitcode)"
-  if [ "137" != "$foundExitCode" ]; then
-    echo "ERROR: Expected exit code 137, got $foundExitCode"
-    kill $PROCESS
-    return 1
-  else
-    echo "Test restore"
-    PROCESS=$($UTILS/start-bg.sh \
-        -s "restore-finish" \
-        $JDK/bin/java -XX:CRaCRestoreFrom=cr)
-    RESPONSE=$(curl -s localhost:8080/hello/test)
-    if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
-    kill $PROCESS
-    echo "Remove Checkpoint"
-    rm -rf cr
-  fi
+build_gradle_docker() {
+  ./gradlew dockerBuild || EXIT_STATUS=$?
+}
+
+build_gradle_docker_crac() {
+  ./gradlew dockerBuildCrac || EXIT_STATUS=$?
+}
+
+gradle() {
+  build_gradle_docker
+  test_docker_checkpoint
+  build_gradle_docker_crac
+  test_docker_checkpoint
 }
