@@ -20,9 +20,12 @@ foo=$(TIMEFORMAT="%U"; time sleep 2)
 
 time_to_first_request() {
   CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
-  echo "Running container $CONTAINER"
+  echo ""
+  echo "======================================="
+  echo "TIME TO FIRST SUCCESSFUL REQUEST FOR $1"
   time execute || EXIT_STATUS=$?
-  docker logs $CONTAINER
+  echo "======================================="
+  echo ""
   docker kill $CONTAINER
 }
 
@@ -38,6 +41,8 @@ gradle() {
   build_gradle_docker
   docker tag micronautguide:latest micronautguide-standard:latest
   build_gradle_docker_crac
+  time_to_first_request micronautguide-standard:latest
+  time_to_first_request micronautguide:latest
   time_to_first_request micronautguide-standard:latest
   time_to_first_request micronautguide:latest
 }
