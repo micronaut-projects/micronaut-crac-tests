@@ -19,9 +19,11 @@ execute() {
 foo=$(TIMEFORMAT="%U"; time sleep 2)
 
 time_to_first_request() {
-  CONTAINER=$(docker run -d -p 8080:8080 micronautguide:latest)
+  CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
+  echo "Running container $CONTAINER"
   time execute || EXIT_STATUS=$?
-  docker stop $CONTAINER
+  docker logs $CONTAINER
+  docker kill $CONTAINER
 }
 
 build_gradle_docker() {
@@ -34,7 +36,8 @@ build_gradle_docker_crac() {
 
 gradle() {
   build_gradle_docker
-  time_to_first_request
+  docker tag micronautguide:latest micronautguide-standard:latest
   build_gradle_docker_crac
-  time_to_first_request
+  time_to_first_request micronautguide-standard:latest
+  time_to_first_request micronautguide:latest
 }
