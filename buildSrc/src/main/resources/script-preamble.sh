@@ -33,6 +33,10 @@ build_gradle_docker() {
   ./gradlew dockerBuild || EXIT_STATUS=$?
 }
 
+build_gradle_docker_native() {
+  ./gradlew dockerBuildNative || EXIT_STATUS=$?
+}
+
 build_gradle_docker_crac() {
   ./gradlew dockerBuildCrac || EXIT_STATUS=$?
 }
@@ -40,9 +44,13 @@ build_gradle_docker_crac() {
 gradle() {
   build_gradle_docker
   docker tag micronautguide:latest micronautguide-standard:latest
+  build_gradle_docker_native
+  docker tag micronautguide:latest micronautguide-native:latest
   build_gradle_docker_crac
   time_to_first_request micronautguide-standard:latest
+  time_to_first_request micronautguide-native:latest
   time_to_first_request micronautguide:latest
   time_to_first_request micronautguide-standard:latest
+  time_to_first_request micronautguide-native:latest
   time_to_first_request micronautguide:latest
 }
