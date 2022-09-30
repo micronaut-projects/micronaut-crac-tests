@@ -23,12 +23,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
       - name: Install prerequisites
         run:
           sudo
@@ -39,20 +33,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Checkout the utils
-        uses: actions/checkout@v2
-        with:
-          repository: CRaC/utils
-          path: utils
-      - name: Build the utils
-        run: |
-          make -C utils
-          echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
-      - name: Download CRaC JDK
-        run: |
-          archive=$(utils/download-jdk.sh)
-          sudo tar -axf $archive
-          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:

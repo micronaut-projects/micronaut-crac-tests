@@ -19,7 +19,7 @@ execute() {
 foo=$(TIMEFORMAT="%U"; time sleep 2)
 
 time_to_first_request() {
-  CONTAINER=$(docker run -d -p 8080:8080 micronautguide:0.1)
+  CONTAINER=$(docker run -d -p 8080:8080 micronautguide:latest)
   time execute || EXIT_STATUS=$?
   docker stop $CONTAINER
 }
@@ -34,7 +34,7 @@ build_gradle_docker_crac() {
 
 gradle() {
   build_gradle_docker
-  test_docker_checkpoint
+  time_to_first_request
   build_gradle_docker_crac
-  test_docker_checkpoint
+  time_to_first_request
 }
