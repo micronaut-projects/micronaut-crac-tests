@@ -49,7 +49,7 @@ test_checkpoint() {
       -jar $JAR)
   echo "Make checkpoint"
   jcmd $PROCESS JDK.checkpoint
-  local foundExitCode="$(readexitcode exitcode)"
+  local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected exit code 137, got $foundExitCode"
     kill $PROCESS
