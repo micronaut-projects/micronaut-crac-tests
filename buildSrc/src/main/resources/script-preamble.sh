@@ -7,7 +7,7 @@ DELAY=30
 execute() {
   # We only want to wait  seconds for success
   local end=$((SECONDS+DELAY))
-  while ! curl -s http://localhost:8080/hello/tim; do
+  while ! curl -o /dev/null -s http://localhost:8080/hello/tim; do
     if [ $SECONDS -gt $end ]; then
       echo "No response from the app in $DELAY seconds"
       return 1
@@ -26,13 +26,8 @@ mytime() {
 
 time_to_first_request_docker() {
   CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
-  echo ""
-  echo "======================================="
-  echo "TIME TO FIRST SUCCESSFUL REQUEST FOR $1"
   result=$(mytime execute)
-  echo "======================================="
-  echo ""
-  docker kill $CONTAINER
+  docker kill $CONTAINER > /dev/null
   echo $result
 }
 
@@ -71,4 +66,5 @@ gradle() {
   echo "| Standard | $standard |" >> $GITHUB_STEP_SUMMARY
   echo "| Native | $native |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC | $crac |" >> $GITHUB_STEP_SUMMARY
+  echo "" >> $GITHUB_STEP_SUMMARY
 }
