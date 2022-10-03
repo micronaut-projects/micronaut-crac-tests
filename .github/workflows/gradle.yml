@@ -38,14 +38,15 @@ jobs:
         run: |
           make -C utils
           echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
+      - name: Checkout this project
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Download CRaC JDK
         run: |
           archive=$(utils/download-jdk.sh)
           sudo tar -axf $archive
-          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV      - name: Checkout this project
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:
