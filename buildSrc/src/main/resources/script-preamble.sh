@@ -71,7 +71,7 @@ time_to_first_request_checkpoint() {
       -XX:+CRTraceStartupTime \
       -Djdk.crac.trace-startup-time=true \
       -jar $JAR)
-  jcmd $PID JDK.checkpoint
+  jcmd $PID JDK.checkpoint > /dev/null
   local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode"
@@ -105,33 +105,34 @@ assemble_gradle() {
 
 gradle() {
   # Build regular app in docker, and rename image to micronautguide-standard
-#  build_gradle_docker
-#  docker tag micronautguide:latest micronautguide-standard:latest
+  build_gradle_docker
+  docker tag micronautguide:latest micronautguide-standard:latest
 
   # Build native app in docker, and rename image to micronautguide-native
-#  build_gradle_docker_native
-#  docker tag micronautguide:latest micronautguide-native:latest
+  build_gradle_docker_native
+  docker tag micronautguide:latest micronautguide-native:latest
 
   # Build crac app in docker
-#  build_gradle_docker_crac
+  build_gradle_docker_crac
 
-#  standard=$(time_to_first_request_docker micronautguide-standard:latest)
-#  native=$(time_to_first_request_docker micronautguide-native:latest)
-#  crac=$(time_to_first_request_docker micronautguide:latest)
+  standard=$(time_to_first_request_docker micronautguide-standard:latest)
+  native=$(time_to_first_request_docker micronautguide-native:latest)
+  crac=$(time_to_first_request_docker micronautguide:latest)
 
   assemble_gradle
   jar=$(time_to_first_request 'build/libs/micronautguide-0.1-all.jar')
   jar_crac=$(time_to_first_request_checkpoint 'build/libs/micronautguide-0.1-all.jar')
 
   echo "## Summary" >> $GITHUB_STEP_SUMMARY
-#  echo "### Docker" >> $GITHUB_STEP_SUMMARY
-#  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
-#  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
-#  echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
-#  echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
-#  echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
-#  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
+  echo "### Docker" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
+  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+  echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "### FatJar" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
   echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
