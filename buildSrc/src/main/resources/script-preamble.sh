@@ -103,6 +103,10 @@ assemble_gradle() {
   ./gradlew assemble
 }
 
+assemble_maven() {
+  ./mvnw --no-transfer-progress clean package
+}
+
 gradle() {
   # Build regular app in docker, and rename image to micronautguide-standard
   build_gradle_docker
@@ -130,6 +134,20 @@ gradle() {
   echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "### FatJar" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
+  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+  echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "" >> $GITHUB_STEP_SUMMARY
+}
+
+maven() {
+  assemble_maven
+  jar=$(time_to_first_request 'target/micronautguide-0.1.jar')
+  jar_crac=$(time_to_first_request_checkpoint 'target/micronautguide-0.1.jar')
+
+  echo "## Summary" >> $GITHUB_STEP_SUMMARY
   echo "### FatJar" >> $GITHUB_STEP_SUMMARY
   echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
