@@ -25,48 +25,6 @@ read_exit_code() {
   fi
 }
 
-test_checkpoint() {
-  local JAR=$1
-  echo "Vanilla test"
-  local PROCESS=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      java -jar $JAR)
-
-  EXPECTED_RESPONSE='Hello test!'
-  RESPONSE=$(curl -s localhost:8080/hello/test)
-  if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
-  kill $PROCESS
-
-  echo "Prepare checkpoint"
-  PROCESS=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      -e exitcode \
-      $JDK/bin/java \
-      -XX:CRaCCheckpointTo=cr \
-      -XX:+UnlockDiagnosticVMOptions \
-      -XX:+CRTraceStartupTime \
-      -Djdk.crac.trace-startup-time=true \
-      -jar $JAR)
-  echo "Make checkpoint"
-  jcmd $PROCESS JDK.checkpoint
-  local foundExitCode="$(read_exit_code exitcode)"
-  if [ "137" != "$foundExitCode" ]; then
-    echo "ERROR: Expected exit code 137, got $foundExitCode"
-    kill $PROCESS
-    return 1
-  else
-    echo "Test restore"
-    PROCESS=$($UTILS/start-bg.sh \
-        -s "restore-finish" \
-        $JDK/bin/java -XX:CRaCRestoreFrom=cr)
-    RESPONSE=$(curl -s localhost:8080/hello/test)
-    if [ "$RESPONSE" != "$EXPECTED_RESPONSE" ]; then echo $RESPONSE && exit 1; fi
-    kill $PROCESS
-    echo "Remove Checkpoint"
-    rm -rf cr
-  fi
-}
-
 execute() {
   # We only want to wait  seconds for success
   local end=$((SECONDS+DELAY))
@@ -92,6 +50,41 @@ time_to_first_request_docker() {
   result=$(mytime execute)
   docker kill $CONTAINER > /dev/null
   echo $result
+}
+
+time_to_first_request() {
+  $JDK/bin/java -jar $1 &
+  PID=$!
+  result=$(mytime execute)
+  kill $PID
+  echo $result
+}
+
+time_to_first_request_checkpoint() {
+  local JAR=$1
+  PID=$($UTILS/start-bg.sh \
+      -s "Startup completed" \
+      -e exitcode \
+      $JDK/bin/java \
+      -XX:CRaCCheckpointTo=cr \
+      -XX:+UnlockDiagnosticVMOptions \
+      -XX:+CRTraceStartupTime \
+      -Djdk.crac.trace-startup-time=true \
+      -jar $JAR)
+  jcmd $PID JDK.checkpoint
+  local foundExitCode="$(read_exit_code exitcode)"
+  if [ "137" != "$foundExitCode" ]; then
+    echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode"
+    kill $PID
+    return 1
+  else
+    $JDK/bin/java -XX:CRaCRestoreFrom=cr &
+    PID=$!
+    result=$(mytime execute)
+    kill $PID
+    rm -rf cr
+    echo $result
+  fi
 }
 
 build_gradle_docker() {
@@ -126,6 +119,10 @@ gradle() {
   native=$(time_to_first_request_docker micronautguide-native:latest)
   crac=$(time_to_first_request_docker micronautguide:latest)
 
+  assemble_gradle
+  jar=$(time_to_first_request 'build/libs/micronautguide-0.1-all.jar')
+  jar_crac=$(time_to_first_request_checkpoint 'build/libs/micronautguide-0.1-all.jar')
+
   echo "### Summary" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
   echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
@@ -133,9 +130,7 @@ gradle() {
   echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
-
-  assemble_gradle
-  test_checkpoint 'build/libs/micronautguide-0.1-all.jar' || EXIT_STATUS=$?
-  echo "test_checkpoint exit code: $EXIT_STATUS" >> $GITHUB_STEP_SUMMARY
 }
