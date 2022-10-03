@@ -29,7 +29,20 @@ jobs:
           DEBIAN_FRONTEND=noninteractive
           apt-get -y --no-install-recommends install
           siege
-      - name: Checkout this project
+      - name: Checkout the utils
+        uses: actions/checkout@v2
+        with:
+          repository: CRaC/utils
+          path: utils
+      - name: Build the utils
+        run: |
+          make -C utils
+          echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
+      - name: Download CRaC JDK
+        run: |
+          archive=$(utils/download-jdk.sh)
+          sudo tar -axf $archive
+          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV      - name: Checkout this project
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
