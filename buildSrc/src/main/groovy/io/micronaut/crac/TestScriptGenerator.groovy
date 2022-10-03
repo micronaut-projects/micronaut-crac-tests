@@ -136,7 +136,7 @@ fi
 cd $nestedFolder
 echo "-------------------------------------------------"
 echo "Building '$folder'"
-echo "# $folder >> \$GITHUB_STEP_SUMMARY"
+echo "# $folder" >> \$GITHUB_STEP_SUMMARY
 ${buildTool == MAVEN ? 'maven' : 'gradle' } || EXIT_STATUS=\$?
 echo "Build exit code: \$EXIT_STATUS"
 cd ..
