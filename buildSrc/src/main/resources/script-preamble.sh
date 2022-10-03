@@ -137,5 +137,5 @@ gradle() {
 
   assemble_gradle
   test_checkpoint 'build/libs/micronautguide-0.1-all.jar' || EXIT_STATUS=$?
-  echo "test_checkpoint exit code: \$EXIT_STATUS" >> $GITHUB_STEP_SUMMARY
+  echo "test_checkpoint exit code: $EXIT_STATUS" >> $GITHUB_STEP_SUMMARY
 }
