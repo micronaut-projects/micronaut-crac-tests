@@ -130,7 +130,6 @@ gradle() {
   echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
-  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "### FatJar" >> $GITHUB_STEP_SUMMARY
   echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
