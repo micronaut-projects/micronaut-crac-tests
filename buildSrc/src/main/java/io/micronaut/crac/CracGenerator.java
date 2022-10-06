@@ -17,11 +17,8 @@ import io.micronaut.starter.options.Language;
 import io.micronaut.starter.options.Options;
 import io.micronaut.starter.util.NameUtils;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.Pattern;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,7 +34,6 @@ import static io.micronaut.starter.options.JdkVersion.JDK_17;
 @Singleton
 public class CracGenerator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CracGenerator.class);
     public static final String SNAPSHOT_REPO = "https://s01.oss.sonatype.org/content/repositories/snapshots";
     public static final String GRADLE_SNAPSHOT_REPO = "    maven { url = '" + SNAPSHOT_REPO + "' }";
     public static final String MAVEN_SONATYPE_ID = "      <id>sonatype</id>";
@@ -72,8 +68,7 @@ public class CracGenerator {
                 addSnapshotDependency(buildTool, directory);
             }
         } catch (Exception e) {
-            LOG.error("Error generating application: " + e.getMessage(), e);
-            throw new IOException(e.getMessage(), e);
+            throw new IOException("Error generating application: " + e.getMessage(), e);
         }
     }
 
@@ -102,7 +97,7 @@ public class CracGenerator {
 
     GeneratorContext createProjectGeneratorContext(
             ApplicationType type,
-            @Pattern(regexp = "[\\w\\d-_.]+") String packageAndName,
+            @Pattern(regexp = "[\\w-.]+") String packageAndName,
             @Nullable List<String> features,
             @Nullable BuildTool buildTool,
             @Nullable TestFramework testFramework,
