@@ -9,7 +9,8 @@ on:
       - master
       - '[1-9]+.[0-9]+.x'
   schedule:
-    - cron: '0 5 * * 1-5'
+    - cron: '0 5 * * 1-5' # Mon-Fri at 5am UTC
+  workflow_dispatch:
 jobs:
   alltests:
     runs-on: ubuntu-latest
@@ -47,6 +48,11 @@ jobs:
           archive=$(utils/download-jdk.sh)
           sudo tar -axf $archive
           echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
+      - name: Show the versions
+        run: |
+          echo "Docker version: $(docker --version)"
+          echo "CRaC JDK version: $($JDK/bin/java -version)"
+          echo "Default JDK version: $(java -version)"
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:
