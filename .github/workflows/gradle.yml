@@ -47,12 +47,16 @@ jobs:
         run: |
           archive=$(utils/download-jdk.sh)
           sudo tar -axf $archive
+          echo "JDK archive: $archive"
           echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
       - name: Show the versions
         run: |
-          echo "Docker version: $(docker --version)"
-          echo "CRaC JDK version: $($JDK/bin/java -version)"
-          echo "Default JDK version: $(java -version)"
+          echo "Docker version"
+          docker --version
+          echo "CRaC JDK version"
+          $JDK/bin/java -version
+          echo "Default JDK version"
+          java -version
       - name: Run All CRaC Tests
         run: './gradlew runAllCracTests'
         env:
