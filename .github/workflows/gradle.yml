@@ -28,8 +28,7 @@ jobs:
         run:
           sudo
           DEBIAN_FRONTEND=noninteractive
-          apt-get -y --no-install-recommends install
-          siege
+          apt-get -y --no-install-recommends install jq
       - name: Checkout this project
         uses: actions/checkout@v2
         with:
@@ -45,10 +44,7 @@ jobs:
           echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
       - name: Download CRaC JDK
         run: |
-          archive=$(utils/download-jdk.sh)
-          sudo tar -axf $archive
-          echo "JDK archive: $archive"
-          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
+          ./cracDownload.sh
       - name: Show the versions
         run: |
           echo "Docker version"

@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
+import java.time.LocalDate
 import java.util.regex.Pattern
 
 import static io.micronaut.starter.api.TestFramework.JUNIT
@@ -75,24 +76,50 @@ class CracProjectGenerator implements AutoCloseable {
         }
 
         Map config = new JsonSlurper().parse(configFile) as Map
+        boolean publish = config.publish == null ? true : config.publish
+
+        List<Category> categories = []
+        for (String c : config.categories) {
+            Category cat = Category.values().find { it.toString() == c }
+            if (cat) {
+                categories << cat
+            } else if (publish && !cat) {
+                throw new GradleException("$configFile.parentFile.name metadata.category=$config.category does not exist in Category enum")
+            }
+        }
 
         Optional.ofNullable(new CracMetadata(
+                asciidoctor: publish ? dir.name + '.adoc' : null,
                 slug: dir.name,
+                title: config.title,
+                intro: config.intro,
+                skip: config.skip ?: false,
+                authors: config.authors,
+                tags: config.tags,
+                categories: categories,
+                publish: publish,
                 base: config.base,
-                skip: config.skip,
-                languages: config.languages as List<String> ?: ['java', 'groovy', 'kotlin'],
-                buildTools: config.buildTools as List<String> ?: ['gradle', 'maven'],
+                languages: config.languages ?: ['java', 'groovy', 'kotlin'],
+                buildTools: config.buildTools ?: ['gradle', 'maven'],
                 testFramework: config.testFramework,
                 skipGradleTests: config.skipGradleTests ?: false,
                 skipMavenTests: config.skipMavenTests ?: false,
+                minimumJavaVersion: config.minimumJavaVersion,
+                maximumJavaVersion: config.maximumJavaVersion,
+                zipIncludes: config.zipIncludes ?: [],
                 apps: config.apps.collect { it ->
                     new CracMetadata.App(
+                            framework: it.framework,
+                            testFramework: it.testFramework?.toUpperCase(),
                             name: it.name,
-                            features: it.features ?: [],
+                            visibleFeatures: it.features ?: [],
+                            invisibleFeatures: it.invisibleFeatures ?: [],
+                            javaFeatures: it.javaFeatures ?: [],
+                            kotlinFeatures: it.kotlinFeatures ?: [],
+                            groovyFeatures: it.groovyFeatures ?: [],
                             applicationType: it.applicationType ? ApplicationType.valueOf(it.applicationType.toUpperCase()) : ApplicationType.DEFAULT,
                             excludeSource: it.excludeSource,
-                            excludeTest: it.excludeTest
-                    )
+                            excludeTest: it.excludeTest)
                 }
         ))
     }
@@ -110,7 +137,7 @@ class CracProjectGenerator implements AutoCloseable {
             Language lang = option.language
 
             for (CracMetadata.App app : metadata.apps) {
-                List<String> appFeatures = [] + app.features
+                List<String> appFeatures = ([] as List<String>) + app.getFeatures(lang)
 
                 // typical guides use 'default' as name, multi-project guides have different modules
                 String appName = app.name == DEFAULT_APP_NAME ? "" : app.name
@@ -120,8 +147,17 @@ class CracProjectGenerator implements AutoCloseable {
                 File destination = destinationPath.toFile()
                 destination.mkdir()
 
-                generator.generateAppIntoDirectory(destination, app.applicationType, packageAndName,
-                        appFeatures, buildTool, testFramework, lang, JdkVersion.JDK_17)
+                generator.generateAppIntoDirectory(
+                        destination,
+                        app.applicationType,
+                        packageAndName,
+                        app.framework,
+                        appFeatures,
+                        buildTool,
+                        app.testFramework ?: testFramework,
+                        lang,
+                        JdkVersion.JDK_17
+                )
 
                 if (metadata.base) {
                     File baseDir = new File(inputDir.parentFile, metadata.base)
@@ -186,14 +222,24 @@ class CracProjectGenerator implements AutoCloseable {
 
     private static CracMetadata mergeMetadatas(CracMetadata base, CracMetadata metadata) {
         CracMetadata merged = new CracMetadata()
-        merged.slug = metadata.slug
         merged.base = metadata.base
-        merged.skip = metadata.skip
+        merged.asciidoctor = metadata.asciidoctor
+        merged.slug = metadata.slug
+        merged.title = metadata.title ?: base.title
+        merged.intro = metadata.intro ?: base.intro
+        merged.authors = mergeLists(metadata.authors, base.authors) as Set<String>
+        merged.tags = mergeLists(base.tags, metadata.tags)
+        merged.categories = metadata.categories ?: base.categories
+        merged.publicationDate = metadata.publicationDate
+        merged.publish = metadata.publish
         merged.buildTools = metadata.buildTools ?: base.buildTools
         merged.languages = metadata.languages ?: base.languages
         merged.testFramework = metadata.testFramework ?: base.testFramework
         merged.skipGradleTests = base.skipGradleTests || metadata.skipGradleTests
         merged.skipMavenTests = base.skipMavenTests || metadata.skipMavenTests
+        merged.minimumJavaVersion = metadata.minimumJavaVersion ?: base.minimumJavaVersion
+        merged.maximumJavaVersion = metadata.maximumJavaVersion ?: base.maximumJavaVersion
+        merged.zipIncludes = metadata.zipIncludes // TODO support merging from base
         merged.apps = mergeApps(base, metadata)
 
         merged
@@ -215,7 +261,11 @@ class CracProjectGenerator implements AutoCloseable {
         for (String name : inBoth) {
             CracMetadata.App baseApp = baseApps[name]
             CracMetadata.App guideApp = guideApps[name]
-            guideApp.features.addAll baseApp.features
+            guideApp.visibleFeatures.addAll baseApp.visibleFeatures
+            guideApp.invisibleFeatures.addAll baseApp.invisibleFeatures
+            guideApp.javaFeatures.addAll baseApp.javaFeatures
+            guideApp.kotlinFeatures.addAll baseApp.kotlinFeatures
+            guideApp.groovyFeatures.addAll baseApp.groovyFeatures
             merged << guideApp
         }
 
