@@ -46,7 +46,7 @@ mytime() {
 }
 
 time_to_first_request_docker() {
-  CONTAINER=$(docker run -p 8080:8080 --privileged $1)
+  CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
   result=$(mytime execute)
   echo "=== Logs from $CONTAINER" >&2
   docker logs $CONTAINER >&2
