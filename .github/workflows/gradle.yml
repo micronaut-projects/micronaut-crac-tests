@@ -67,8 +67,10 @@ jobs:
         run: |
           echo "Docker version"
           docker --version
+          echo ""
           echo "CRaC JDK version at $JDK"
           $JDK/bin/java -version
+          echo ""
           echo "Default JDK version at $(which java)"
           java -version
 

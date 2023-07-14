@@ -71,6 +71,7 @@ time_to_first_request_checkpoint() {
       -XX:+CRTraceStartupTime \
       -Djdk.crac.trace-startup-time=true \
       -jar $JAR)
+  echo "-- Sending JDK.checkpoint to $PID"
   jcmd $PID JDK.checkpoint > /dev/null
   local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
@@ -78,6 +79,7 @@ time_to_first_request_checkpoint() {
     kill $PID
     return 1
   else
+    ls -lh cr
     $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
     PID=$!
     result=$(mytime execute)
@@ -108,23 +110,70 @@ assemble_maven() {
 }
 
 gradle() {
+  echo ""
+  echo "--------------------------------------------"
+  echo "Running ./gradlew dockerBuild"
+  echo "--------------------------------------------"
+  echo ""
   # Build regular app in docker, and rename image to micronautguide-standard
   build_gradle_docker
   docker tag micronautguide:latest micronautguide-standard:latest
 
+  echo ""
+  echo "--------------------------------------------"
+  echo "Running ./gradlew dockerBuildNative"
+  echo "--------------------------------------------"
+  echo ""
   # Build native app in docker, and rename image to micronautguide-native
   build_gradle_docker_native
   docker tag micronautguide:latest micronautguide-native:latest
 
+  echo ""
+  echo "--------------------------------------------"
+  echo "Running ./gradlew dockerBuildCrac"
+  echo "--------------------------------------------"
+  echo ""
   # Build crac app in docker
   build_gradle_docker_crac
 
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard docker image"
+  echo "--------------------------------------------"
+  echo ""
   standard=$(time_to_first_request_docker micronautguide-standard:latest)
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard native image"
+  echo "--------------------------------------------"
+  echo ""
   native=$(time_to_first_request_docker micronautguide-native:latest)
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard crac image"
+  echo "--------------------------------------------"
+  echo ""
   crac=$(time_to_first_request_docker micronautguide:latest)
 
+  echo ""
+  echo "--------------------------------------------"
+  echo "Running ./gradlew assemble"
+  echo "--------------------------------------------"
+  echo ""
   assemble_gradle
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard jar"
+  echo "--------------------------------------------"
+  echo ""
   jar=$(time_to_first_request 'build/libs/micronautguide-0.1-all.jar')
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Snapshotting and timing crac jar"
+  echo "--------------------------------------------"
+  echo ""
   jar_crac=$(time_to_first_request_checkpoint 'build/libs/micronautguide-0.1-all.jar')
 
   echo "## Summary" >> $GITHUB_STEP_SUMMARY
