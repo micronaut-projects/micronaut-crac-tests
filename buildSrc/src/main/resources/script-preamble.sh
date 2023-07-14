@@ -46,9 +46,13 @@ mytime() {
 }
 
 time_to_first_request_docker() {
-  CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
+  CONTAINER=$(docker run -p 8080:8080 --privileged $1)
   result=$(mytime execute)
+  echo "=== Logs from $CONTAINER" >&2
+  docker logs $CONTAINER >&2
+  echo "=== Killing $CONTAINER" >&2
   docker kill $CONTAINER > /dev/null
+  docker rm $CONTAINER > /dev/null
   echo $result
 }
 
@@ -71,11 +75,11 @@ time_to_first_request_checkpoint() {
       -XX:+CRTraceStartupTime \
       -Djdk.crac.trace-startup-time=true \
       -jar $JAR)
-  echo "-- Sending JDK.checkpoint to $PID"
-  jcmd $PID JDK.checkpoint > /dev/null
+  echo "-- Sending JDK.checkpoint to $PID" >&2
+  $JDK/bin/jcmd $PID JDK.checkpoint > /dev/null
   local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
-    echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode"
+    echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode" >&2
     kill $PID
     return 1
   else
