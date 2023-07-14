@@ -3,6 +3,8 @@
 CRAC_JDK_VERSION=17
 CRAC_ARCH=$(uname -m)
 
+echo "Downloading CRaC OpenJDK $CRAC_JDK_VERSION for $CRAC_ARCH"
+
 release_id=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=${CRAC_JDK_VERSION}&arch=${CRAC_ARCH}&crac_supported=true&latest=true&release_status=ga&certifications=tck&page=1&page_size=100" -H "accept: application/json" | jq -r '.[0] | .package_uuid')
 if [ "$release_id" = "null" ]; then
   echo "No CRaC OpenJDK $CRAC_JDK_VERSION for $CRAC_ARCH found"
