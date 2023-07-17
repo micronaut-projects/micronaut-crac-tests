@@ -82,7 +82,6 @@ time_to_first_request_checkpoint() {
   echo "-- Curl response" 1>&2
   curl localhost:8080 1>&2
   echo "-- Sending JDK.checkpoint to $JAVA_PID" 1>&2
-  sudo ps 1>&2
 
   sudo jcmd $JAVA_PID JDK.checkpoint 1>&2
   local foundExitCode="$(read_exit_code exitcode)"
