@@ -120,6 +120,13 @@ assemble_maven() {
 }
 
 gradle() {
+  ### PATCH THE GRADLE BUILD FOR GLIBC
+  echo "\
+tasks.named('dockerfileNative') { \
+    baseImage = 'frolvlad/alpine-glibc:alpine-3.17_glibc-2.34' \
+} \
+" >> build.gradle
+
   echo ""
   echo "--------------------------------------------"
   echo "Running ./gradlew dockerBuild"
