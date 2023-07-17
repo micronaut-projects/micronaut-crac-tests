@@ -4,6 +4,9 @@ FAILED_PROJECTS=()
 EXIT_STATUS=0
 DELAY=30
 
+# Running in a GH action, we need a base-image with glibc 2.34 for the native docker builds
+FIXED_IMAGE_FOR_NATIVE_ON_GITHUB=frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
+
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
 
@@ -104,7 +107,7 @@ build_gradle_docker() {
 }
 
 build_maven_docker() {
-  ./mvnw package -Dpackaging=docker || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker || EXIT_STATUS=$?
 }
 
 build_gradle_docker_native() {
@@ -112,7 +115,7 @@ build_gradle_docker_native() {
 }
 
 build_maven_docker_native() {
-  ./mvnw package -Dpackaging=docker-native || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB || EXIT_STATUS=$?
 }
 
 build_gradle_docker_crac() {
@@ -120,7 +123,7 @@ build_gradle_docker_crac() {
 }
 
 build_maven_docker_crac() {
-  ./mvnw package -Dpackaging=docker-crac || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-crac || EXIT_STATUS=$?
 }
 
 assemble_gradle() {
@@ -135,7 +138,7 @@ gradle() {
   ### PATCH THE GRADLE BUILD FOR GLIBC
   echo "\
 tasks.named('dockerfileNative') { \
-    baseImage = 'frolvlad/alpine-glibc:alpine-3.17_glibc-2.34' \
+    baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB' \
 } \
 " >> build.gradle
 
