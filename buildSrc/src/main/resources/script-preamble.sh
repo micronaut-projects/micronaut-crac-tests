@@ -76,7 +76,7 @@ time_to_first_request_checkpoint() {
       -Djdk.crac.trace-startup-time=true \
       -jar $JAR)
   echo "-- Sending JDK.checkpoint to $PID" >&2
-  $JDK/bin/jcmd $PID JDK.checkpoint > /dev/null
+  sudo $JDK/bin/jcmd $PID JDK.checkpoint > /dev/null
   local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode" >&2
