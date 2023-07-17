@@ -36,10 +36,6 @@ jobs:
           sudo apt-get clean
           df -h
 
-      - name: "🔗 Install requirements"
-        run: |
-          sudo apt-get update && sudo apt-get -y install libnl-3-200
-
       - name: "📥 Checkout repository"
         uses: actions/checkout@v3
         with:

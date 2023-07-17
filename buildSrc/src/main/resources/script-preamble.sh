@@ -179,6 +179,10 @@ gradle() {
   echo ""
   jar=$(time_to_first_request 'build/libs/micronautguide-0.1-all.jar')
 
+  # See if this fixes Github action runner
+  # shellcheck disable=SC2034
+  GLIBC_TUNABLES=glibc.pthread.rseq=0
+
   echo ""
   echo "--------------------------------------------"
   echo "Snapshotting and timing crac jar"
