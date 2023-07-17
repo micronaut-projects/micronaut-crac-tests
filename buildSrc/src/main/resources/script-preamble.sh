@@ -103,12 +103,24 @@ build_gradle_docker() {
   ./gradlew dockerBuild || EXIT_STATUS=$?
 }
 
+build_maven_docker() {
+  ./mvnw package -Dpackaging=docker || EXIT_STATUS=$?
+}
+
 build_gradle_docker_native() {
   ./gradlew dockerBuildNative || EXIT_STATUS=$?
 }
 
+build_maven_docker_native() {
+  ./mvnw package -Dpackaging=docker-native || EXIT_STATUS=$?
+}
+
 build_gradle_docker_crac() {
   ./gradlew dockerBuildCrac || EXIT_STATUS=$?
+}
+
+build_maven_docker_crac() {
+  ./mvnw package -Dpackaging=docker-crac || EXIT_STATUS=$?
 }
 
 assemble_gradle() {
@@ -211,11 +223,65 @@ tasks.named('dockerfileNative') { \
 }
 
 maven() {
+  echo ""
+  echo "--------------------------------------------"
+  echo "Building standard docker image"
+  echo "--------------------------------------------"
+  echo ""
+  # Build regular app in docker, and rename image to micronautguide-standard
+  build_maven_docker
+  docker tag micronautguide:latest micronautguide-standard-maven:latest
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Building native docker image"
+  echo "--------------------------------------------"
+  echo ""
+  # Build native app in docker, and rename image to micronautguide-native
+  build_maven_docker_native
+  docker tag micronautguide:latest micronautguide-native-maven:latest
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Building crac docker image"
+  echo "--------------------------------------------"
+  echo ""
+  # Build crac app in docker
+  build_maven_docker_crac
+  docker tag micronautguide:latest micronautguide-maven:latest
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard docker image"
+  echo "--------------------------------------------"
+  echo ""
+  standard=$(time_to_first_request_docker micronautguide-standard-maven:latest)
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard native image"
+  echo "--------------------------------------------"
+  echo ""
+  native=$(time_to_first_request_docker micronautguide-native-maven:latest)
+
+  echo ""
+  echo "--------------------------------------------"
+  echo "Timing standard crac image"
+  echo "--------------------------------------------"
+  echo ""
+  crac=$(time_to_first_request_docker micronautguide-maven:latest)
+
   assemble_maven
   jar=$(time_to_first_request 'target/micronautguide-0.1.jar')
   jar_crac=$(time_to_first_request_checkpoint 'target/micronautguide-0.1.jar')
 
   echo "## Summary" >> $GITHUB_STEP_SUMMARY
+  echo "### Docker" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
+  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+  echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "### FatJar" >> $GITHUB_STEP_SUMMARY
   echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
