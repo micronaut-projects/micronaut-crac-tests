@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.time.LocalDate
 import java.util.regex.Pattern
 
 import static io.micronaut.starter.api.TestFramework.JUNIT
@@ -76,29 +75,11 @@ class CracProjectGenerator implements AutoCloseable {
         }
 
         Map config = new JsonSlurper().parse(configFile) as Map
-        boolean publish = config.publish == null ? true : config.publish
-
-        List<Category> categories = []
-        for (String c : config.categories) {
-            Category cat = Category.values().find { it.toString() == c }
-            if (cat) {
-                categories << cat
-            } else if (publish && !cat) {
-                throw new GradleException("$configFile.parentFile.name metadata.category=$config.category does not exist in Category enum")
-            }
-        }
 
         Optional.ofNullable(new CracMetadata(
-                asciidoctor: publish ? dir.name + '.adoc' : null,
                 slug: dir.name,
-                title: config.title,
-                intro: config.intro,
-                skip: config.skip ?: false,
-                authors: config.authors,
-                tags: config.tags,
-                categories: categories,
-                publish: publish,
                 base: config.base,
+                skip: config.skip ?: false,
                 languages: config.languages ?: ['java', 'groovy', 'kotlin'],
                 buildTools: config.buildTools ?: ['gradle', 'maven'],
                 testFramework: config.testFramework,
@@ -106,7 +87,6 @@ class CracProjectGenerator implements AutoCloseable {
                 skipMavenTests: config.skipMavenTests ?: false,
                 minimumJavaVersion: config.minimumJavaVersion,
                 maximumJavaVersion: config.maximumJavaVersion,
-                zipIncludes: config.zipIncludes ?: [],
                 apps: config.apps.collect { it ->
                     new CracMetadata.App(
                             framework: it.framework,
@@ -119,7 +99,8 @@ class CracProjectGenerator implements AutoCloseable {
                             groovyFeatures: it.groovyFeatures ?: [],
                             applicationType: it.applicationType ? ApplicationType.valueOf(it.applicationType.toUpperCase()) : ApplicationType.DEFAULT,
                             excludeSource: it.excludeSource,
-                            excludeTest: it.excludeTest)
+                            excludeTest: it.excludeTest
+                    )
                 }
         ))
     }
@@ -222,16 +203,9 @@ class CracProjectGenerator implements AutoCloseable {
 
     private static CracMetadata mergeMetadatas(CracMetadata base, CracMetadata metadata) {
         CracMetadata merged = new CracMetadata()
-        merged.base = metadata.base
-        merged.asciidoctor = metadata.asciidoctor
         merged.slug = metadata.slug
-        merged.title = metadata.title ?: base.title
-        merged.intro = metadata.intro ?: base.intro
-        merged.authors = mergeLists(metadata.authors, base.authors) as Set<String>
-        merged.tags = mergeLists(base.tags, metadata.tags)
-        merged.categories = metadata.categories ?: base.categories
-        merged.publicationDate = metadata.publicationDate
-        merged.publish = metadata.publish
+        merged.base = metadata.base
+        merged.skip = metadata.skip
         merged.buildTools = metadata.buildTools ?: base.buildTools
         merged.languages = metadata.languages ?: base.languages
         merged.testFramework = metadata.testFramework ?: base.testFramework

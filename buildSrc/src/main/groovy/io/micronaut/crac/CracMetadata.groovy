@@ -6,22 +6,12 @@ import io.micronaut.starter.api.TestFramework
 import io.micronaut.starter.application.ApplicationType
 import io.micronaut.starter.options.Language
 
-import java.time.LocalDate
-
 @ToString(includeNames = true)
 @CompileStatic
 class CracMetadata {
 
-    String asciidoctor
     String slug
-    String title
-    String intro
-    Set<String> authors
-    List<String> tags
-    List<Category> categories
-    LocalDate publicationDate
 
-    boolean publish
     boolean skip
     String base
 
