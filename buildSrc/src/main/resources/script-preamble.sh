@@ -66,16 +66,10 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-  echo "Running startup with $JDK/bin/java \
-                                   -XX:CRaCCheckpointTo=cr \
-                                   -XX:+UnlockDiagnosticVMOptions \
-                                   -XX:+CRTraceStartupTime \
-                                   -Djdk.crac.trace-startup-time=true \
-                                   -jar $JAR"
   PID=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
-      $JDK/bin/java \
+      sudo $JDK/bin/java \
       -XX:CRaCCheckpointTo=cr \
       -XX:+UnlockDiagnosticVMOptions \
       -XX:+CRTraceStartupTime \
@@ -89,7 +83,7 @@ time_to_first_request_checkpoint() {
     kill $PID
     return 1
   else
-    $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
+    sudo $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
     PID=$!
     result=$(mytime execute)
     kill $PID
