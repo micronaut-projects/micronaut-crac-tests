@@ -66,6 +66,12 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
+  echo "Running startup with $JDK/bin/java \
+                                   -XX:CRaCCheckpointTo=cr \
+                                   -XX:+UnlockDiagnosticVMOptions \
+                                   -XX:+CRTraceStartupTime \
+                                   -Djdk.crac.trace-startup-time=true \
+                                   -jar $JAR"
   PID=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
