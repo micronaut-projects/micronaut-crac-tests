@@ -86,7 +86,7 @@ time_to_first_request_checkpoint() {
     sudo $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
     PID=$!
     result=$(mytime execute)
-    kill $PID
+    sudo kill $PID
     echo $result
   fi
 }
