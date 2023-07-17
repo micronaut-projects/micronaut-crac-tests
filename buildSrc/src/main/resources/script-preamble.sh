@@ -31,7 +31,7 @@ read_exit_code() {
 execute() {
   # We only want to wait  seconds for success
   local end=$((SECONDS+DELAY))
-  while ! curl -o /dev/null -s http://localhost:8080/hello/tim; do
+  while ! curl -o /dev/null -s http://localhost:8080/; do
     if [ $SECONDS -gt $end ]; then
       echo "No response from the app in $DELAY seconds"
       return 1
@@ -83,7 +83,7 @@ time_to_first_request_checkpoint() {
   JAVA_PID=$(ps --ppid $PID -o pid=)
 
   echo "-- Curl response" 1>&2
-  curl localhost:8080 1>&2
+  curl -o /dev/null localhost:8080 1>&2
   echo "-- Sending JDK.checkpoint to $JAVA_PID" 1>&2
 
   sudo jcmd $JAVA_PID JDK.checkpoint 1>&2
