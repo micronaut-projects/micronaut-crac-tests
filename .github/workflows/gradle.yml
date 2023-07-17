@@ -38,7 +38,7 @@ jobs:
 
       - name: "🔗 Install requirements"
         run: |
-          apt-get update && apt-get -y install libnl-3-200
+          sudo apt-get update && sudo apt-get -y install libnl-3-200
 
       - name: "📥 Checkout repository"
         uses: actions/checkout@v3
