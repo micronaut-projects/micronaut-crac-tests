@@ -127,8 +127,8 @@ gradle() {
   echo "--------------------------------------------"
   echo ""
   # Build regular app in docker, and rename image to micronautguide-standard
-#  build_gradle_docker
-#  docker tag micronautguide:latest micronautguide-standard:latest
+  build_gradle_docker
+  docker tag micronautguide:latest micronautguide-standard:latest
 
   echo ""
   echo "--------------------------------------------"
@@ -136,8 +136,8 @@ gradle() {
   echo "--------------------------------------------"
   echo ""
   # Build native app in docker, and rename image to micronautguide-native
-#  build_gradle_docker_native
-#  docker tag micronautguide:latest micronautguide-native:latest
+  build_gradle_docker_native
+  docker tag micronautguide:latest micronautguide-native:latest
 
   echo ""
   echo "--------------------------------------------"
@@ -145,26 +145,28 @@ gradle() {
   echo "--------------------------------------------"
   echo ""
   # Build crac app in docker
-#  build_gradle_docker_crac
+  build_gradle_docker_crac
 
   echo ""
   echo "--------------------------------------------"
   echo "Timing standard docker image"
   echo "--------------------------------------------"
   echo ""
-#  standard=$(time_to_first_request_docker micronautguide-standard:latest)
+  standard=$(time_to_first_request_docker micronautguide-standard:latest)
+
   echo ""
   echo "--------------------------------------------"
   echo "Timing standard native image"
   echo "--------------------------------------------"
   echo ""
-#  native=$(time_to_first_request_docker micronautguide-native:latest)
+  native=$(time_to_first_request_docker micronautguide-native:latest)
+
   echo ""
   echo "--------------------------------------------"
   echo "Timing standard crac image"
   echo "--------------------------------------------"
   echo ""
-#  crac=$(time_to_first_request_docker micronautguide:latest)
+  crac=$(time_to_first_request_docker micronautguide:latest)
 
   echo ""
   echo "--------------------------------------------"
@@ -188,12 +190,12 @@ gradle() {
   jar_crac=$(time_to_first_request_checkpoint 'build/libs/micronautguide-0.1-all.jar')
 
   echo "## Summary" >> $GITHUB_STEP_SUMMARY
-#  echo "### Docker" >> $GITHUB_STEP_SUMMARY
-#  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
-#  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
-#  echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
-#  echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
-#  echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "### Docker" >> $GITHUB_STEP_SUMMARY
+  echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
+  echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+  echo "| Standard Docker | $standard | $(bc -l <<< "scale=3; $standard/$standard") ($(bc -l <<< "scale=1; $standard/$standard")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| Native Docker | $native | $(bc -l <<< "scale=3; $native/$standard")  ($(bc -l <<< "scale=1; $standard/$native")x) |" >> $GITHUB_STEP_SUMMARY
+  echo "| CRaC Docker | $crac | $(bc -l <<< "scale=3; $crac/$standard")  ($(bc -l <<< "scale=1; $standard/$crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "### FatJar" >> $GITHUB_STEP_SUMMARY
   echo "| Build type | Time to First Request (secs) | Scale |" >> $GITHUB_STEP_SUMMARY
   echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
