@@ -77,3 +77,9 @@ jobs:
       - name: "🏃‍♀️Run All CRaC Tests"
         run: |
           ./gradlew runAllCracTests
+
+      - name: "⬆ Upload dump files for debug"
+        uses: actions/upload-artifact@v3
+        with:
+          name: CRaC dump files
+          path: "*/**/cr/dump4.log"

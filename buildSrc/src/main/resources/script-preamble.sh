@@ -89,12 +89,10 @@ time_to_first_request_checkpoint() {
     kill $PID
     return 1
   else
-    ls -lh cr
     $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
     PID=$!
     result=$(mytime execute)
     kill $PID
-    rm -rf cr
     echo $result
   fi
 }
@@ -189,9 +187,6 @@ gradle() {
   echo "--------------------------------------------"
   echo ""
   jar_crac=$(time_to_first_request_checkpoint 'build/libs/micronautguide-0.1-all.jar')
-
-  echo "## cr/dump4.log" >> $GITHUB_STEP_SUMMARY
-  tail -n 100 cr/dump4.log >> $GITHUB_STEP_SUMMARY
 
   echo "## Summary" >> $GITHUB_STEP_SUMMARY
   echo "### Docker" >> $GITHUB_STEP_SUMMARY
