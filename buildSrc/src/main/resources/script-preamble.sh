@@ -66,61 +66,37 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-  $JDK/bin/java \
+  echo "Running startup with $JDK/bin/java \
+                                   -XX:CRaCCheckpointTo=cr \
+                                   -XX:+UnlockDiagnosticVMOptions \
+                                   -XX:+CRTraceStartupTime \
+                                   -Djdk.crac.trace-startup-time=true \
+                                   -jar $JAR"
+  PID=$($UTILS/start-bg.sh \
+      -s "Startup completed" \
+      -e exitcode \
+      $JDK/bin/java \
       -XX:CRaCCheckpointTo=cr \
       -XX:+UnlockDiagnosticVMOptions \
       -XX:+CRTraceStartupTime \
       -Djdk.crac.trace-startup-time=true \
-      -jar $JAR >&2 &
-  PID=$!
-
-  # Wait for the app to be started
-  echo "Waiting 10s for application to start" >&2
-  retries=5
-  until $(curl --output /dev/null --silent --head http://localhost:8080); do
-    if [ $retries -le 0 ]; then
-      echo "failed" >&2
-      exit 1
-    fi
-    echo -n '.' >&2
-    sleep 2
-    retries=$((retries - 1))
-  done
-
+      -jar $JAR)
   echo "-- Sending JDK.checkpoint to $PID" >&2
-  $JDK/bin/jcmd $PID JDK.checkpoint >&2
-
-  echo "Wait up to 60s for snapshot to be complete" >&2
-  retries=12
-  while [ $retries -gt 0 ]; do
-    kill -0 $PID 2>/dev/null
-    OK=$?
-    if [ $OK -eq 1 ] ; then
-      echo ".done" >&2
-      break
-    fi
-    echo -n "$OK." >&2
-    sleep 5
-    retries=$((retries - 1))
-  done
-
-  kill -0 $PID 2>/dev/null
-  OK=$?
-  if [ $OK -eq 1 ]; then
-    wait $PID
-    echo "EXITED WITH $?" >&2
-    echo "Snapshotting complete" >&2
+  $JDK/bin/jcmd $PID JDK.checkpoint > /dev/null
+  local foundExitCode="$(read_exit_code exitcode)"
+  if [ "137" != "$foundExitCode" ]; then
+    echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode" >&2
+    kill $PID
+    return 1
   else
-    echo "Snapshotting failed"
-    exit 1
+    ls -lh cr
+    $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
+    PID=$!
+    result=$(mytime execute)
+    kill $PID
+    rm -rf cr
+    echo $result
   fi
-
-  $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 2>&1 &
-  PID=$!
-  result=$(mytime execute)
-  kill $PID > /dev/null
-  rm -rf cr > /dev/null
-  echo $result
 }
 
 build_gradle_docker() {
