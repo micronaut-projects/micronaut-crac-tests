@@ -77,24 +77,25 @@ time_to_first_request_checkpoint() {
       -jar $JAR)
 
   # The PID is the PID of the sudo command, so get the java command:
-  PID=$(ps --ppid $PID -o pid=)
+  JAVA_PID=$(ps --ppid $PID -o pid=)
 
   echo "-- Curl response" 1>&2
   curl localhost:8080 1>&2
-  echo "-- Sending JDK.checkpoint to $PID" 1>&2
+  echo "-- Sending JDK.checkpoint to $JAVA_PID" 1>&2
   sudo ps 1>&2
 
-  sudo jcmd $PID JDK.checkpoint 1>&2
+  sudo jcmd $JAVA_PID JDK.checkpoint 1>&2
   local foundExitCode="$(read_exit_code exitcode)"
   if [ "137" != "$foundExitCode" ]; then
     echo "ERROR: Expected checkpoint exit code 137, got $foundExitCode" 1>&2
-    sudo kill $PID 1>&2
+    sudo kill $JAVA_PID 1>&2
     return 1
   else
     sudo $JDK/bin/java -XX:CRaCRestoreFrom=cr > /dev/null 1>&2 &
     PID=$!
     result=$(mytime execute)
-    sudo kill $PID 1>&2
+    JAVA_PID=$(ps --ppid $PID -o pid=)
+    sudo kill $JAVA_PID 1>&2
     echo $result
   fi
 }
