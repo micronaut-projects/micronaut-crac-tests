@@ -34,7 +34,6 @@ import java.util.Optional;
 import static io.micronaut.http.HttpStatus.BAD_REQUEST;
 import static io.micronaut.starter.options.BuildTool.GRADLE;
 import static io.micronaut.starter.options.JdkVersion.JDK_17;
-import static io.micronaut.starter.options.JdkVersion.JDK_8;
 
 @Singleton
 public class CracGenerator {
@@ -92,7 +91,7 @@ public class CracGenerator {
                 lang,
                 testFramework != null ? testFramework.toTestFramework() : null,
                 buildTool == null ? GRADLE : buildTool,
-                javaVersion != null ? javaVersion : JDK_8).withFramework(framework),
+                javaVersion != null ? javaVersion : JDK_17).withFramework(framework),
             null,
             features != null ? features : Collections.emptyList(),
             ConsoleOutput.NOOP
