@@ -18,7 +18,11 @@ import io.micronaut.starter.options.Options;
 import io.micronaut.starter.util.NameUtils;
 import jakarta.inject.Singleton;
 
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,9 +38,7 @@ import static io.micronaut.starter.options.JdkVersion.JDK_17;
 @Singleton
 public class CracGenerator {
 
-    public static final String SNAPSHOT_REPO = "https://s01.oss.sonatype.org/content/repositories/snapshots";
-    public static final String GRADLE_SNAPSHOT_REPO = "    maven { url = '" + SNAPSHOT_REPO + "' }";
-    public static final String MAVEN_SONATYPE_ID = "      <id>sonatype</id>";
+    private static final Logger LOG = LoggerFactory.getLogger(CracGenerator.class);
 
     private final ProjectGenerator projectGenerator;
 
@@ -45,64 +47,36 @@ public class CracGenerator {
     }
 
     public void generateAppIntoDirectory(
-         @NonNull File directory,
-         @NonNull ApplicationType type,
-         @NonNull String packageAndName,
-         @Nullable List<String> features,
-         @Nullable BuildTool buildTool,
-         @Nullable TestFramework testFramework,
-         @Nullable Language lang,
-         @Nullable JdkVersion javaVersion) throws IOException {
-        GeneratorContext generatorContext = createProjectGeneratorContext(type, packageAndName, features, buildTool, testFramework, lang, javaVersion);
+        @NonNull File directory,
+        @NotNull ApplicationType type,
+        @NotNull String packageAndName,
+        @Nullable String framework,
+        @Nullable List<String> features,
+        @Nullable BuildTool buildTool,
+        @Nullable TestFramework testFramework,
+        @Nullable Language lang,
+        @Nullable JdkVersion javaVersion) throws IOException {
+        GeneratorContext generatorContext = createProjectGeneratorContext(type, packageAndName, framework, features, buildTool, testFramework, lang, javaVersion);
         try {
             projectGenerator.generate(type,
-                    generatorContext.getProject(),
-                    new FileSystemOutputHandler(directory, ConsoleOutput.NOOP),
-                    generatorContext);
-            Optional<Dependency> micronautCrac = generatorContext
-                .getDependencies()
-                .stream()
-                .filter(dependency -> "micronaut-crac".equals(dependency.getArtifactId()))
-                .findFirst();
-            if (micronautCrac.map(Dependency::getVersion).map(v -> v.endsWith("-SNAPSHOT")).orElse(false)) {
-                addSnapshotDependency(buildTool, directory);
-            }
+                generatorContext.getProject(),
+                new FileSystemOutputHandler(directory, ConsoleOutput.NOOP),
+                generatorContext);
         } catch (Exception e) {
-            throw new IOException("Error generating application: " + e.getMessage(), e);
-        }
-    }
-
-    private void addSnapshotDependency(BuildTool buildTool, File directory) throws IOException {
-        if (buildTool == null || buildTool.isGradle()) {
-            Path script = directory.toPath().resolve("build.gradle");
-            List<String> lines = Files.readAllLines(script);
-            if (!lines.contains(GRADLE_SNAPSHOT_REPO)) {
-                int index = lines.indexOf("repositories {");
-                lines.add(index + 1, GRADLE_SNAPSHOT_REPO);
-                Files.writeString(script, String.join("\n", lines));
-            }
-        } else {
-            Path script = directory.toPath().resolve("pom.xml");
-            List<String> lines = Files.readAllLines(script);
-            if (!lines.contains(MAVEN_SONATYPE_ID)) {
-                int index = lines.indexOf("  <repositories>");
-                lines.add(index + 1, "    <repository>\n" +
-                    MAVEN_SONATYPE_ID + "\n" +
-                    "      <url>" + SNAPSHOT_REPO + "</url>\n" +
-                    "    </repository>");
-                Files.writeString(script, String.join("\n", lines));
-            }
+            LOG.error("Error generating application: " + e.getMessage(), e);
+            throw new IOException(e.getMessage(), e);
         }
     }
 
     GeneratorContext createProjectGeneratorContext(
-            ApplicationType type,
-            @Pattern(regexp = "[\\w-.]+") String packageAndName,
-            @Nullable List<String> features,
-            @Nullable BuildTool buildTool,
-            @Nullable TestFramework testFramework,
-            @Nullable Language lang,
-            @Nullable JdkVersion javaVersion) throws IllegalArgumentException {
+        ApplicationType type,
+        @Pattern(regexp = "[\\w\\d-_\\.]+") String packageAndName,
+        @Nullable String framework,
+        @Nullable List<String> features,
+        @Nullable BuildTool buildTool,
+        @Nullable TestFramework testFramework,
+        @Nullable Language lang,
+        @Nullable JdkVersion javaVersion) throws IllegalArgumentException {
         Project project;
         try {
             project = NameUtils.parse(packageAndName);
@@ -111,16 +85,16 @@ public class CracGenerator {
         }
 
         return projectGenerator.createGeneratorContext(
-                type,
-                project,
-                new Options(
-                        lang,
-                        testFramework != null ? testFramework.toTestFramework() : null,
-                        buildTool == null ? GRADLE : buildTool,
-                        javaVersion != null ? javaVersion : JDK_17),
-                null,
-                features != null ? features : Collections.emptyList(),
-                ConsoleOutput.NOOP
+            type,
+            project,
+            new Options(
+                lang,
+                testFramework != null ? testFramework.toTestFramework() : null,
+                buildTool == null ? GRADLE : buildTool,
+                javaVersion != null ? javaVersion : JDK_17).withFramework(framework),
+            null,
+            features != null ? features : Collections.emptyList(),
+            ConsoleOutput.NOOP
         );
     }
 }

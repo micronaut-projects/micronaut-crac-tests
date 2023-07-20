@@ -16,50 +16,63 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ["17"]
+        java: ['17']
     env:
-      JDK_VERSION: ${{ matrix.java }}
+      GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+      GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+      GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
+      GH_USERNAME: ${{ secrets.GH_USERNAME }}
+      TESTCONTAINERS_RYUK_DISABLED: true
+      PREDICTIVE_TEST_SELECTION: "${{ github.event_name == 'pull_request' && 'true' || 'false' }}"
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - name: Set up default JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-      - name: Install prerequisites
-        run:
-          sudo
-          DEBIAN_FRONTEND=noninteractive
-          apt-get -y --no-install-recommends install
-          siege
-      - name: Checkout this project
-        uses: actions/checkout@v2
+      - name: "🗑 Free disk space"
+        run: |
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          df -h
+
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Checkout the utils
+
+      - name: "🔧 Setup JDK"
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+
+      - name: "🗄️ Checkout the utils"
         uses: actions/checkout@v2
         with:
           repository: CRaC/utils
           path: utils
-      - name: Build the utils
+
+      - name: "🔧 Build the utils"
         run: |
           make -C utils
           echo UTILS="$(pwd)/utils" >> $GITHUB_ENV
-      - name: Download CRaC JDK
+
+      - name: "☕️ Download CRaC JDK"
         run: |
-          archive=$(utils/download-jdk.sh)
-          sudo tar -axf $archive
-          echo "JDK archive: $archive"
-          echo JDK="$(pwd)/${archive%%.tar.gz}" >> $GITHUB_ENV
-      - name: Show the versions
+          ./cracDownload.sh
+
+      - name: "🔍 Show the versions"
         run: |
           echo "Docker version"
           docker --version
-          echo "CRaC JDK version"
+          echo ""
+          echo "CRaC JDK version at $JDK"
           $JDK/bin/java -version
-          echo "Default JDK version"
+          echo ""
+          echo "Default JDK version at $(which java)"
           java -version
-      - name: Run All CRaC Tests
-        run: './gradlew runAllCracTests'
-        env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+
+      - name: "🏃‍♀️Run All CRaC Tests"
+        run: |
+          ./gradlew runAllCracTests
