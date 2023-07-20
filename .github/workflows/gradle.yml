@@ -41,12 +41,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1
+      - name: "🔧 Setup JDK"
+        uses: actions/setup-java@v3
         with:
-          distribution: 'graalvm-community'
+          distribution: 'temurin'
           java-version: ${{ matrix.java }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "🗄️ Checkout the utils"
         uses: actions/checkout@v2
