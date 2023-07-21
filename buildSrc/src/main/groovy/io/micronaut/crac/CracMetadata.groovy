@@ -26,6 +26,7 @@ class CracMetadata {
     Integer maximumJavaVersion
 
     List<String> zipIncludes
+    List<String> requirements
 
     List<App> apps
 

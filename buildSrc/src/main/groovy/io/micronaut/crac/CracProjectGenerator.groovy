@@ -87,6 +87,7 @@ class CracProjectGenerator implements AutoCloseable {
                 skipMavenTests: config.skipMavenTests ?: false,
                 minimumJavaVersion: config.minimumJavaVersion,
                 maximumJavaVersion: config.maximumJavaVersion,
+                requirements: config.requirements,
                 apps: config.apps.collect { it ->
                     new CracMetadata.App(
                             framework: it.framework,
@@ -214,6 +215,7 @@ class CracProjectGenerator implements AutoCloseable {
         merged.minimumJavaVersion = metadata.minimumJavaVersion ?: base.minimumJavaVersion
         merged.maximumJavaVersion = metadata.maximumJavaVersion ?: base.maximumJavaVersion
         merged.zipIncludes = metadata.zipIncludes // TODO support merging from base
+        merged.requirements = metadata.requirements
         merged.apps = mergeApps(base, metadata)
 
         merged

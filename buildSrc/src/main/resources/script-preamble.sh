@@ -6,9 +6,22 @@ DELAY=30
 
 # Running in a GH action, we need a base-image with glibc 2.34 for the native docker builds
 FIXED_IMAGE_FOR_NATIVE_ON_GITHUB=frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
+CRAC_NETWORK_NAME=crac-network
+
+# Create a docker network for external services
+docker network create $CRAC_NETWORK_NAME
 
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
+
+# Requirements for the tests, called by name
+requirement_mysql() {
+  docker run -d -rm --name mysqlhost -p 3306:3306 --network crac-network -e MYSQL_ROOT_PASSWORD=mysql mysql
+}
+
+stop_requirement_mysql() {
+  docker stop mysqlhost
+}
 
 read_exit_code() {
   local exitcode=$1
@@ -123,7 +136,7 @@ build_gradle_docker_crac() {
 }
 
 build_maven_docker_crac() {
-  ./mvnw --no-transfer-progress package -Dpackaging=docker-crac || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-crac -Dcrac.checkpoint.network=$CRAC_NETWORK_NAME || EXIT_STATUS=$?
 }
 
 assemble_gradle() {
@@ -135,11 +148,17 @@ assemble_maven() {
 }
 
 gradle() {
-  ### PATCH THE GRADLE BUILD FOR GLIBC
+  ### PATCH THE GRADLE BUILD FOR GLIBC AND DOCKER NETWORK
   echo "\
 tasks.named('dockerfileNative') { \
     baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB' \
 } \
+\
+micronaut { \
+  crac { \
+    network = '$CRAC_NETWORK_NAME' \
+  } \
+}\
 " >> build.gradle
 
   echo ""
