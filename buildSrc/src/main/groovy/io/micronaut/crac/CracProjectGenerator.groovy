@@ -203,22 +203,21 @@ class CracProjectGenerator implements AutoCloseable {
     }
 
     private static CracMetadata mergeMetadatas(CracMetadata base, CracMetadata metadata) {
-        CracMetadata merged = new CracMetadata()
-        merged.slug = metadata.slug
-        merged.base = metadata.base
-        merged.skip = metadata.skip
-        merged.buildTools = metadata.buildTools ?: base.buildTools
-        merged.languages = metadata.languages ?: base.languages
-        merged.testFramework = metadata.testFramework ?: base.testFramework
-        merged.skipGradleTests = base.skipGradleTests || metadata.skipGradleTests
-        merged.skipMavenTests = base.skipMavenTests || metadata.skipMavenTests
-        merged.minimumJavaVersion = metadata.minimumJavaVersion ?: base.minimumJavaVersion
-        merged.maximumJavaVersion = metadata.maximumJavaVersion ?: base.maximumJavaVersion
-        merged.zipIncludes = metadata.zipIncludes // TODO support merging from base
-        merged.requirements = metadata.requirements
-        merged.apps = mergeApps(base, metadata)
-
-        merged
+        new CracMetadata().tap {
+            slug = metadata.slug
+            it.base = metadata.base
+            skip = metadata.skip
+            buildTools = metadata.buildTools ?: base.buildTools
+            languages = metadata.languages ?: base.languages
+            testFramework = metadata.testFramework ?: base.testFramework
+            skipGradleTests = base.skipGradleTests || metadata.skipGradleTests
+            skipMavenTests = base.skipMavenTests || metadata.skipMavenTests
+            minimumJavaVersion = metadata.minimumJavaVersion ?: base.minimumJavaVersion
+            maximumJavaVersion = metadata.maximumJavaVersion ?: base.maximumJavaVersion
+            zipIncludes = metadata.zipIncludes // TODO support merging from base
+            requirements = mergeLists(base.requirements, metadata.requirements)
+            apps = mergeApps(base, metadata)
+        }
     }
 
     private static List<CracMetadata.App> mergeApps(CracMetadata base, CracMetadata metadata) {

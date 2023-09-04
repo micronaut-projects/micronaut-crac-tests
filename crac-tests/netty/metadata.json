@@ -1,11 +1,11 @@
 {
   "languages": ["java"],
   "base": "hello-base",
+  "requirements": ["mysql"],
   "apps": [
     {
       "name": "default",
-      "features": ["yaml", "crac"],
-      "requirements": ["mysql"]
+      "features": ["yaml", "crac"]
     }
   ]
 }
