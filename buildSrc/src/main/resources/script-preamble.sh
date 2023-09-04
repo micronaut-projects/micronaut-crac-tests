@@ -166,17 +166,17 @@ assemble_maven() {
 
 gradle() {
   ### PATCH THE GRADLE BUILD FOR GLIBC AND DOCKER NETWORK
-  echo "\
-tasks.named('dockerfileNative') { \
-    baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB' \
-} \
-\
-micronaut { \
-  crac { \
-    network = '$CRAC_NETWORK_NAME' \
-  } \
-}\
-" >> build.gradle
+  cat << EOF >> build.gradle
+tasks.named('dockerfileNative') {
+    baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB'
+}
+
+micronaut {
+  crac {
+    network = '$CRAC_NETWORK_NAME'
+  }
+}
+EOF
 
   echo ""
   echo "--------------------------------------------"
