@@ -14,9 +14,26 @@ docker network create $CRAC_NETWORK_NAME
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
 
+containerHealth() {
+  docker inspect --format "{{.State.Health.Status}}" "$1"
+}
+
+waitContainer() {
+  while STATUS=$(containerHealth "$1"); [ "$STATUS" != "healthy" ]; do
+    if [ "$STATUS" == "unhealthy" ]; then
+      echo "Failed!"
+      exit 2
+    fi
+    echo -n .
+    sleep 1
+  done
+  echo ".ok!"
+}
+
 # Requirements for the tests, called by name
 requirement_mysql() {
-  docker run -d -rm --name mysqlhost -p 3306:3306 --network crac-network -e MYSQL_ROOT_PASSWORD=mysql mysql
+  docker run -d --rm --name mysqlhost -p 3306:3306 --health-cmd='mysqladmin ping --silent' --network crac-network -e MYSQL_ROOT_PASSWORD=mysql mysql
+  waitContainer mysqlhost
 }
 
 stop_requirement_mysql() {
