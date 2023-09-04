@@ -145,7 +145,7 @@ build_gradle_docker_native() {
 }
 
 build_maven_docker_native() {
-  ./mvnw --no-transfer-progress package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-native -Pgraalvm -Dmicronaut.native-image.base-image-run=$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB || EXIT_STATUS=$?
 }
 
 build_gradle_docker_crac() {
