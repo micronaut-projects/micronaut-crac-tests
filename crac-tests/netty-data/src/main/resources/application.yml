@@ -3,7 +3,7 @@ micronaut:
     name: micronautguide
 datasources:
   default:
-    url: jdbc:mysql://${DB_HOST:localhost}:3306/crac
+    url: jdbc:mysql://${LOCALHOST:mysql}:3306/crac
     username: root
     password: mysql
     driverClassName: com.mysql.cj.jdbc.Driver

@@ -7,6 +7,7 @@ DELAY=30
 # Running in a GH action, we need a base-image with glibc 2.34 for the native docker builds
 FIXED_IMAGE_FOR_NATIVE_ON_GITHUB=frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
 CRAC_NETWORK_NAME=crac-network
+export LOCALHOST=localhost
 
 # Create a docker network for external services
 docker network create $CRAC_NETWORK_NAME
@@ -283,6 +284,11 @@ EOF
   echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
+
+  # Remove images
+  docker image rm micronautguide-standard:latest
+  docker image rm micronautguide-native:latest
+  docker image rm micronautguide:latest
 }
 
 maven() {
@@ -351,4 +357,9 @@ maven() {
   echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
+
+  # Remove images
+  docker image rm micronautguide-maven:latest
+  docker image rm micronautguide-native-maven:latest
+  docker image rm micronautguide-standard-maven:latest
 }
