@@ -32,12 +32,30 @@ waitContainer() {
 
 # Requirements for the tests, called by name
 requirement_mysql() {
-  docker run -d --rm --name mysqlhost -p 3306:3306 --health-cmd='mysqladmin ping --silent' --network crac-network -e MYSQL_ROOT_PASSWORD=mysql mysql
+  docker run \
+    --detach \
+    --rm \
+    --name mysqlhost \
+    --publish 3306:3306 \
+    --health-cmd='mysqladmin ping --silent' \
+    --network $CRAC_NETWORK_NAME \
+    --network-alias db \
+    --env MYSQL_ROOT_PASSWORD=mysql \
+    --env MYSQL_DATABASE=crac \
+    mysql
   waitContainer mysqlhost
 }
 
 stop_requirement_mysql() {
   docker stop mysqlhost
+}
+
+env_docker_requirement_mysql() {
+  export DB_HOST=mysql
+}
+
+env_clear() {
+  unset DB_HOST
 }
 
 read_exit_code() {
@@ -79,13 +97,19 @@ mytime() {
 }
 
 time_to_first_request_docker() {
-  CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
+  CONTAINER=$(docker run \
+      --detach \
+      --rm \
+      --publish 8080:8080 \
+      --network $CRAC_NETWORK_NAME \
+      --env DB_HOST=db \
+      --privileged \
+      $1)
   result=$(mytime execute)
   echo "=== Logs from $CONTAINER" >&2
   docker logs $CONTAINER >&2
   echo "=== Killing $CONTAINER" >&2
   docker kill $CONTAINER > /dev/null
-  docker rm $CONTAINER > /dev/null
   echo $result
 }
 

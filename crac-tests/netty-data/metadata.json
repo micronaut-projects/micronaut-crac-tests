@@ -1,0 +1,10 @@
+{
+  "languages": ["java"],
+  "requirements": ["mysql"],
+  "apps": [
+    {
+      "name": "default",
+      "features": ["yaml", "crac", "data-jdbc", "flyway", "jdbc-hikari", "mysql", "graalvm", "serialization-jackson", "validation"]
+    }
+  ]
+}

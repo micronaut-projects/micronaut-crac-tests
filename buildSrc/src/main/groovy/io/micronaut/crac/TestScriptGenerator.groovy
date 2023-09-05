@@ -86,7 +86,6 @@ class TestScriptGenerator {
         StringBuilder bashScript = new StringBuilder(collect)
         metadatas.sort { it.slug }
         for (CracMetadata metadata : metadatas) {
-            println metadata.requirements
             List<CracOption> guidesOptionList = CracProjectGenerator.guidesOptions(metadata)
             bashScript.append("\n")
             if (metadata.requirements) {

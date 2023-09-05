@@ -1,7 +1,6 @@
 {
   "languages": ["java"],
   "base": "hello-base",
-  "requirements": ["mysql"],
   "apps": [
     {
       "name": "default",
