@@ -56,14 +56,6 @@ stop_requirement_mysql() {
   docker stop mysqlhost
 }
 
-env_docker_requirement_mysql() {
-  export DB_HOST=mysql
-}
-
-env_clear() {
-  unset DB_HOST
-}
-
 read_exit_code() {
   local exitcode=$1
   local retries=60 # 30 seconds of 0.5 second sleeps
@@ -120,7 +112,7 @@ time_to_first_request_docker() {
 }
 
 time_to_first_request() {
-  $JDK/bin/java -jar $1 > /dev/null 2>&1 &
+  LOCALHOST=localhost $JDK/bin/java -jar $1 > /dev/null 2>&1 &
   PID=$!
   result=$(mytime execute)
   kill $PID
@@ -129,7 +121,7 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-  PID=$($UTILS/start-bg.sh \
+  PID=$(LOCALHOST=localhost $UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
       sudo $JDK/bin/java \
