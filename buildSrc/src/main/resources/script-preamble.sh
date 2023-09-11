@@ -45,6 +45,11 @@ requirement_mysql() {
     --env MYSQL_DATABASE=crac \
     mysql
   waitContainer mysqlhost
+  echo "-------------------------------------------------------------------------------------------"
+  echo "MYSQL status ------------------------------------------------------------------------------"
+  docker inspect mysqlhost | jq '.[] | {health: .State.Health.Status, network: .NetworkSettings.Networks, ports: .NetworkSettings.Ports}'
+  echo "MYSQL status ------------------------------------------------------------------------------"
+  echo "-------------------------------------------------------------------------------------------"
 }
 
 stop_requirement_mysql() {
