@@ -124,11 +124,11 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-
+  declare -x LOCALHOST=localhost
   PID=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
-      export LOCALHOST=localhost && sudo $JDK/bin/java \
+      sudo $JDK/bin/java \
       -XX:CRaCCheckpointTo=cr \
       -XX:+UnlockDiagnosticVMOptions \
       -XX:+CRTraceStartupTime \
