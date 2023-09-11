@@ -15,6 +15,9 @@ docker network create $CRAC_NETWORK_NAME
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
 
+# This can be used by local JAR executions to detect that they are not running in docker (for choosing a db host, etc)
+export LOCALHOST=localhost
+
 containerHealth() {
   docker inspect --format "{{.State.Health.Status}}" "$1"
 }
@@ -112,7 +115,7 @@ time_to_first_request_docker() {
 }
 
 time_to_first_request() {
-  LOCALHOST=localhost $JDK/bin/java -jar $1 > /dev/null 2>&1 &
+  $JDK/bin/java -jar $1 > /dev/null 2>&1 &
   PID=$!
   result=$(mytime execute)
   kill $PID
@@ -121,7 +124,8 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-  PID=$(LOCALHOST=localhost $UTILS/start-bg.sh \
+
+  PID=$($UTILS/start-bg.sh \
       -s "Startup completed" \
       -e exitcode \
       sudo $JDK/bin/java \

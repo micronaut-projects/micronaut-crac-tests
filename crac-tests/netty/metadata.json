@@ -1,6 +1,7 @@
 {
   "languages": ["java"],
   "base": "hello-base",
+  "skip": true,
   "apps": [
     {
       "name": "default",

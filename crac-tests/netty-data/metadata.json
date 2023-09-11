@@ -1,6 +1,7 @@
 {
   "languages": ["java"],
   "requirements": ["mysql"],
+  "skipMavenTests": true,
   "apps": [
     {
       "name": "default",
