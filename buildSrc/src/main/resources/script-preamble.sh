@@ -40,7 +40,7 @@ requirement_mysql() {
     --publish 3306:3306 \
     --health-cmd='mysqladmin ping --silent' \
     --network $CRAC_NETWORK_NAME \
-    --network-alias db \
+    --network-alias mysql \
     --env MYSQL_ROOT_PASSWORD=mysql \
     --env MYSQL_DATABASE=crac \
     mysql
