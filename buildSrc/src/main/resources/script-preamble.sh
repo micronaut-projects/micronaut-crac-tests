@@ -7,6 +7,7 @@ DELAY=30
 # Running in a GH action, we need a base-image with glibc 2.34 for the native docker builds
 FIXED_IMAGE_FOR_NATIVE_ON_GITHUB=frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
 CRAC_NETWORK_NAME=crac-network
+# This can be used by local JAR executions to detect that they are not running in docker (for choosing a db host, etc)
 export LOCALHOST=localhost
 
 # Create a docker network for external services
@@ -14,9 +15,6 @@ docker network create $CRAC_NETWORK_NAME
 
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
-
-# This can be used by local JAR executions to detect that they are not running in docker (for choosing a db host, etc)
-export LOCALHOST=localhost
 
 containerHealth() {
   docker inspect --format "{{.State.Health.Status}}" "$1"
@@ -123,10 +121,10 @@ time_to_first_request() {
 }
 
 time_to_first_request_checkpoint() {
-  local JAR=$1
+  # Pass the localhost value as config via arguments as start-bg makes it hard to pass env variables
+  local JAR="$1 -LOCALHOST $LOCALHOST"
 
-  PID=$(declare -x LOCALHOST=localhost &&
-      $UTILS/start-bg.sh \
+  PID=$($UTILS/start-bg.sh \
         -s "Startup completed" \
         -e exitcode \
         sudo $JDK/bin/java \
@@ -136,8 +134,17 @@ time_to_first_request_checkpoint() {
         -Djdk.crac.trace-startup-time=true \
         -jar $JAR)
 
+  if [ -z $PID ]; then
+    echo "ERROR: Failed to start app" 1>&2
+    return 1
+  fi
   # The PID is the PID of the sudo command, so get the java command:
   JAVA_PID=$(ps --ppid $PID -o pid=)
+
+  if [ -z $JAVA_PID ]; then
+    echo "ERROR: Failed to find java PID" 1>&2
+    return 1
+  fi
 
   echo "-- Curl response" 1>&2
   curl -o /dev/null localhost:8080 1>&2
