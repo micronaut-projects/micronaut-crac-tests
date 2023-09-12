@@ -124,16 +124,17 @@ time_to_first_request() {
 
 time_to_first_request_checkpoint() {
   local JAR=$1
-  declare -x LOCALHOST=localhost
-  PID=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      -e exitcode \
-      sudo $JDK/bin/java \
-      -XX:CRaCCheckpointTo=cr \
-      -XX:+UnlockDiagnosticVMOptions \
-      -XX:+CRTraceStartupTime \
-      -Djdk.crac.trace-startup-time=true \
-      -jar $JAR)
+
+  PID=$(declare -x LOCALHOST=localhost &&
+      $UTILS/start-bg.sh \
+        -s "Startup completed" \
+        -e exitcode \
+        sudo $JDK/bin/java \
+        -XX:CRaCCheckpointTo=cr \
+        -XX:+UnlockDiagnosticVMOptions \
+        -XX:+CRTraceStartupTime \
+        -Djdk.crac.trace-startup-time=true \
+        -jar $JAR)
 
   # The PID is the PID of the sudo command, so get the java command:
   JAVA_PID=$(ps --ppid $PID -o pid=)
