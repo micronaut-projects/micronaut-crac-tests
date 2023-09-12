@@ -6,9 +6,56 @@ DELAY=30
 
 # Running in a GH action, we need a base-image with glibc 2.34 for the native docker builds
 FIXED_IMAGE_FOR_NATIVE_ON_GITHUB=frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
+CRAC_NETWORK_NAME=crac-network
+# This can be used by local JAR executions to detect that they are not running in docker (for choosing a db host, etc)
+export LOCALHOST=localhost
+
+# Create a docker network for external services
+docker network create $CRAC_NETWORK_NAME
 
 echo "=== Utils located at '$UTILS'"
 echo "=== CRaC JDK located at '$JDK'"
+
+containerHealth() {
+  docker inspect --format "{{.State.Health.Status}}" "$1"
+}
+
+waitContainer() {
+  while STATUS=$(containerHealth "$1"); [ "$STATUS" != "healthy" ]; do
+    if [ "$STATUS" == "unhealthy" ]; then
+      echo "Failed!"
+      exit 2
+    fi
+    echo -n .
+    sleep 1
+  done
+  echo ".ok!"
+}
+
+# Requirements for the tests, called by name
+requirement_mysql() {
+  docker run \
+    --detach \
+    --rm \
+    --name mysqlhost \
+    --publish 3306:3306 \
+    --health-cmd='mysqladmin ping --silent' \
+    --network $CRAC_NETWORK_NAME \
+    --network-alias mysql \
+    --env MYSQL_ROOT_PASSWORD=mysql \
+    --env MYSQL_DATABASE=crac \
+    mysql
+  waitContainer mysqlhost
+  echo "-------------------------------------------------------------------------------------------"
+  echo "MYSQL status ------------------------------------------------------------------------------"
+  docker inspect mysqlhost | jq '.[] | {health: .State.Health.Status, network: .NetworkSettings.Networks, ports: .NetworkSettings.Ports}'
+  echo "MYSQL status ------------------------------------------------------------------------------"
+  echo "-------------------------------------------------------------------------------------------"
+}
+
+stop_requirement_mysql() {
+  docker stop mysqlhost
+}
 
 read_exit_code() {
   local exitcode=$1
@@ -49,13 +96,19 @@ mytime() {
 }
 
 time_to_first_request_docker() {
-  CONTAINER=$(docker run -d -p 8080:8080 --privileged $1)
+  CONTAINER=$(docker run \
+      --detach \
+      --rm \
+      --publish 8080:8080 \
+      --network $CRAC_NETWORK_NAME \
+      --env DB_HOST=db \
+      --privileged \
+      $1)
   result=$(mytime execute)
   echo "=== Logs from $CONTAINER" >&2
   docker logs $CONTAINER >&2
   echo "=== Killing $CONTAINER" >&2
   docker kill $CONTAINER > /dev/null
-  docker rm $CONTAINER > /dev/null
   echo $result
 }
 
@@ -68,19 +121,30 @@ time_to_first_request() {
 }
 
 time_to_first_request_checkpoint() {
-  local JAR=$1
-  PID=$($UTILS/start-bg.sh \
-      -s "Startup completed" \
-      -e exitcode \
-      sudo $JDK/bin/java \
-      -XX:CRaCCheckpointTo=cr \
-      -XX:+UnlockDiagnosticVMOptions \
-      -XX:+CRTraceStartupTime \
-      -Djdk.crac.trace-startup-time=true \
-      -jar $JAR)
+  # Pass the localhost value as config via arguments as start-bg makes it hard to pass env variables
+  local JAR="$1 -LOCALHOST $LOCALHOST"
 
+  PID=$($UTILS/start-bg.sh \
+        -s "Startup completed" \
+        -e exitcode \
+        sudo $JDK/bin/java \
+        -XX:CRaCCheckpointTo=cr \
+        -XX:+UnlockDiagnosticVMOptions \
+        -XX:+CRTraceStartupTime \
+        -Djdk.crac.trace-startup-time=true \
+        -jar $JAR)
+
+  if [ -z $PID ]; then
+    echo "ERROR: Failed to start app" 1>&2
+    return 1
+  fi
   # The PID is the PID of the sudo command, so get the java command:
   JAVA_PID=$(ps --ppid $PID -o pid=)
+
+  if [ -z $JAVA_PID ]; then
+    echo "ERROR: Failed to find java PID" 1>&2
+    return 1
+  fi
 
   echo "-- Curl response" 1>&2
   curl -o /dev/null localhost:8080 1>&2
@@ -115,7 +179,7 @@ build_gradle_docker_native() {
 }
 
 build_maven_docker_native() {
-  ./mvnw --no-transfer-progress package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-native -Pgraalvm -Dmicronaut.native-image.base-image-run=$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB || EXIT_STATUS=$?
 }
 
 build_gradle_docker_crac() {
@@ -123,7 +187,7 @@ build_gradle_docker_crac() {
 }
 
 build_maven_docker_crac() {
-  ./mvnw --no-transfer-progress package -Dpackaging=docker-crac || EXIT_STATUS=$?
+  ./mvnw --no-transfer-progress package -Dpackaging=docker-crac -Dcrac.checkpoint.network=$CRAC_NETWORK_NAME || EXIT_STATUS=$?
 }
 
 assemble_gradle() {
@@ -135,12 +199,18 @@ assemble_maven() {
 }
 
 gradle() {
-  ### PATCH THE GRADLE BUILD FOR GLIBC
-  echo "\
-tasks.named('dockerfileNative') { \
-    baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB' \
-} \
-" >> build.gradle
+  ### PATCH THE GRADLE BUILD FOR GLIBC AND DOCKER NETWORK
+  cat << EOF >> build.gradle
+tasks.named('dockerfileNative') {
+    baseImage = '$FIXED_IMAGE_FOR_NATIVE_ON_GITHUB'
+}
+
+micronaut {
+  crac {
+    network = '$CRAC_NETWORK_NAME'
+  }
+}
+EOF
 
   echo ""
   echo "--------------------------------------------"
@@ -223,6 +293,11 @@ tasks.named('dockerfileNative') { \
   echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
+
+  # Remove images
+  docker image rm micronautguide-standard:latest
+  docker image rm micronautguide-native:latest
+  docker image rm micronautguide:latest
 }
 
 maven() {
@@ -291,4 +366,9 @@ maven() {
   echo "| Standard FatJar | $jar | $(bc -l <<< "scale=3; $jar/$jar")  ($(bc -l <<< "scale=1; $jar/$jar")x) |" >> $GITHUB_STEP_SUMMARY
   echo "| CRaC FatJar | $jar_crac | $(bc -l <<< "scale=3; $jar_crac/$jar")  ($(bc -l <<< "scale=1; $jar/$jar_crac")x) |" >> $GITHUB_STEP_SUMMARY
   echo "" >> $GITHUB_STEP_SUMMARY
+
+  # Remove images
+  docker image rm micronautguide-maven:latest
+  docker image rm micronautguide-native-maven:latest
+  docker image rm micronautguide-standard-maven:latest
 }

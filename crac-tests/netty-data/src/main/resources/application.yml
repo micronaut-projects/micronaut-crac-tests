@@ -1,0 +1,16 @@
+micronaut:
+  application:
+    name: micronautguide
+datasources:
+  default:
+    url: jdbc:mysql://${LOCALHOST:mysql}:3306/crac
+    username: root
+    password: mysql
+    driverClassName: com.mysql.cj.jdbc.Driver
+    schema-generate: NONE
+    dialect: MYSQL
+    allow-pool-suspension: true
+flyway:
+  datasources:
+    default:
+      enabled: true # <1>

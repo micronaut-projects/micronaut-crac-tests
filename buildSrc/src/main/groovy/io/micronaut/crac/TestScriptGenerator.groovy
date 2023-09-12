@@ -88,6 +88,13 @@ class TestScriptGenerator {
         for (CracMetadata metadata : metadatas) {
             List<CracOption> guidesOptionList = CracProjectGenerator.guidesOptions(metadata)
             bashScript.append("\n")
+            if (metadata.requirements) {
+                bashScript.append("# Start all required services\n")
+                metadata.requirements?.each {
+                    bashScript.append("requirement_$it\n")
+                }
+                bashScript.append("\n")
+            }
             for (CracOption guidesOption : guidesOptionList) {
                 String folder = CracProjectGenerator.folderName(metadata.slug, guidesOption)
                 BuildTool buildTool = folder.contains(MAVEN.toString()) ? MAVEN : GRADLE
@@ -111,9 +118,17 @@ cd ..
 """
                 }
             }
+            if (metadata.requirements) {
+                bashScript.append("# Stop required services\n")
+                metadata.requirements?.each {
+                    bashScript.append("stop_requirement_$it\n")
+                }
+            }
         }
 
         bashScript << '''
+docker network rm $CRAC_NETWORK_NAME
+
 if [ ${#FAILED_PROJECTS[@]} -ne 0 ]; then
   echo ""
   echo "-------------------------------------------------"

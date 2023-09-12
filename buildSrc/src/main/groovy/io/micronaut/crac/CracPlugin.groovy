@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.TaskProvider
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,6 +45,10 @@ class CracPlugin implements Plugin<Project> {
             it.group = 'CRaC'
             it.description = 'Runs all CRaC test scripts'
             it.dependsOn(cracBuildTasks)
+        }
+
+        project.tasks.register("clean", Delete.class) { Delete it ->
+            it.delete(project.layout.buildDirectory)
         }
     }
 
