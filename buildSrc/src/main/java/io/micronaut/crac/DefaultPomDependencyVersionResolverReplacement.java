@@ -24,8 +24,6 @@ public class DefaultPomDependencyVersionResolverReplacement extends DefaultPomDe
     @Override
     @NonNull
     public Optional<Coordinate> resolve(@NonNull String artifactId) {
-        Optional<Coordinate> coordinate = Optional.ofNullable(coordinates.computeIfAbsent(artifactId, k -> StarterCoordinates.ALL_COORDINATES.get(artifactId)));
-        System.out.println("Artifact ID: " + artifactId + " Coordinate: " + coordinate.map(Coordinate::getVersion));
-        return coordinate;
+        return Optional.ofNullable(coordinates.computeIfAbsent(artifactId, k -> StarterCoordinates.ALL_COORDINATES.get(artifactId)));
     }
 }
