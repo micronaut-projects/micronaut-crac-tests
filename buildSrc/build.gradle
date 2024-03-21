@@ -23,7 +23,7 @@ dependencies {
     implementation("io.micronaut.starter:micronaut-starter-api:$micronautVersion")
     implementation("io.micronaut.starter:micronaut-starter-aws-cdk:$micronautVersion")
     implementation("io.micronaut:micronaut-inject-java")
-    implementation("org.apache.commons:commons-compress:1.25.0")
+    implementation("org.apache.commons:commons-compress:1.26.1")
     implementation "io.micronaut.docs:micronaut-docs-asciidoc-extensions:$micronautDocsVersion", {
         exclude group: "org.codehaus.groovy"
     }
