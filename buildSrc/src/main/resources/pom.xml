@@ -12,5 +12,11 @@
         </repository>
     </repositories>
     <dependencies>
+        <!-- Pull in latest plugin to fix CRaC issue -->
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-crac-plugin</artifactId>
+            <version>4.3.5</version>
+        </dependency>
     </dependencies>
 </project>
