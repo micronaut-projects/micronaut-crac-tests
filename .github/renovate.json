@@ -1,18 +1,5 @@
 {
   "extends": [
-    "config:base"
-  ],
-  "addLabels": ["dependency-upgrade"],
-  "schedule": [
-    "every weekend"
-  ],
-  "prHourlyLimit": 1,
-  "prConcurrentLimit": 20,
-  "timezone": "Europe/Prague",
-  "packageRules": [
-    {
-      "matchPackagePatterns": ["actions.*"],
-      "dependencyDashboardApproval": true
-    }
+    "local>micronaut-projects/micronaut-project-template//.github/renovate-global"
   ]
 }
